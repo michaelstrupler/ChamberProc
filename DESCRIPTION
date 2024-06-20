@@ -13,3 +13,9 @@ URL: https://github.com/michaelstrupler/ChamberProc
 BugReports: https://github.com/michaelstrupler/ChamberProc/issues
 RoxygenNote: 7.3.1
 Roxygen: list(markdown = TRUE)
+Imports: 
+    elevatr,
+    openmeteo,
+    RespChamberProc (>= 0.6.5)
+Remotes: 
+    url::https://github.com/bgctw/RespChamberProc/tree/collarchunk

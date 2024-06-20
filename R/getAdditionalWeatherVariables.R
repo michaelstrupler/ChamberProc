@@ -32,27 +32,24 @@
 #start- and endtime needs to be in ""%Y-%m-%d" format, e.g. "2022-05-01"
 getAdditionalWeatherVariables <- function(latDeciDeg,lonDeciDeg,starttime,endtime){
 
-
-
   ## Create a data frame with the coordinates (Geographical Coordinates (decimal degrees); crs =4326)
   sampling_location<- data.frame(
     lat = latDeciDeg, #37.91514875822371
     lon = lonDeciDeg #-4.72405536319233,
   )
 
-
   ## Convert the data frame to an sf object
   sampling_location_sf <- st_as_sf(sampling_location, coords = c("lon", "lat"), crs = 4326)
-  sampling_location_elevation<- get_elev_point(locations=sampling_location_sf, src = "aws") #gets elevation data from Amazon Web Service Terrain Tiles (Mapzen terrain tiles is a composite of elevation data of varying resolutions from multiple open data sources including SRTM, ETOPO1, and other higher resolution sources for some parts of the world.)
+  sampling_location_elevation<- elevatr::get_elev_point(locations=sampling_location_sf, src = "aws") #gets elevation data from Amazon Web Service Terrain Tiles (Mapzen terrain tiles is a composite of elevation data of varying resolutions from multiple open data sources including SRTM, ETOPO1, and other higher resolution sources for some parts of the world.)
 
 
   ## get historical hourly weather variables from the Open-Meteo API
-  temperature <- weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="temperature_2m",timezone = "UTC") #Temperature 2m above ground
-  atmospheric_pressure_msl <- weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="pressure_msl",timezone = "UTC") # multiply by 100 to convert from hPa to Pa
+  temperature <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="temperature_2m",timezone = "UTC") #Temperature 2m above ground
+  atmospheric_pressure_msl <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="pressure_msl",timezone = "UTC") # multiply by 100 to convert from hPa to Pa
 
-  relative_humidity <- weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="relative_humidity_2m",timezone = "UTC") # unit %
-  sw_radiation <- weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="shortwave_radiation",timezone = "UTC") # unit: W/m^2
-  ref_evapotranspiration <- weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="et0_fao_evapotranspiration",timezone = "UTC") # unit:mm
+  relative_humidity <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="relative_humidity_2m",timezone = "UTC") # unit %
+  sw_radiation <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="shortwave_radiation",timezone = "UTC") # unit: W/m^2
+  ref_evapotranspiration <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="et0_fao_evapotranspiration",timezone = "UTC") # unit:mm
 
   ## Convert atmospheric pressure from sea level to pressure at altitude and convert to Pa
   scale_height <- 8400 # meters
