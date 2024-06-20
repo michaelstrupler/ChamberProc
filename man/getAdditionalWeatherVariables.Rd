@@ -18,7 +18,7 @@ getAdditionalWeatherVariables(latDeciDeg, lonDeciDeg, starttime, endtime)
 \value{
 A tibble containing the following environmental variables:
 \itemize{
-\item \code{elevation} (\emph{h}): Elevation at the sample location. (m a.s.l)
+\item \code{h}: Elevation at the sample location. (m a.s.l)
 \item \code{AirTemp}: Air temperature at 2m above ground. (°C)
 \item \code{Pa}: Atmospheric pressure at the sample location elevation. (Pa)
 \item \code{rel_humidity}: Relative humidity at 2m above ground. (\%)

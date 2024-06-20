@@ -10,7 +10,7 @@
 #' @param endtime Character. End date in '%Y-%m-%d' format, e.g., '2022-05-02'.
 #'
 #' @return A tibble containing the following environmental variables:
-#'   - `elevation` (*h*): Elevation at the sample location. (m a.s.l)
+#'   - `h`: Elevation at the sample location. (m a.s.l)
 #'   - `AirTemp`: Air temperature at 2m above ground. (°C)
 #'   - `Pa`: Atmospheric pressure at the sample location elevation. (Pa)
 #'   - `rel_humidity`: Relative humidity at 2m above ground. (%)
