@@ -9,7 +9,7 @@ convertToRegularTimesteps(df, var_names, regular_timesteps)
 \arguments{
 \item{df}{A dataframe containing the measurement data and time stamps}
 
-\item{var_names}{The names of the variables that need to be interpolated to regular time steps}
+\item{var_names}{Character. The names of the variables that need to be interpolated to regular time steps}
 
 \item{regular_timesteps}{A continuous timestamp vector}
 }
@@ -17,7 +17,7 @@ convertToRegularTimesteps(df, var_names, regular_timesteps)
 A dataframe with equidistant timesteps
 }
 \description{
-Interpolate measurement data to equidistant timesteps
+Interpolate measurement data from irregular timesteps to equidistant timesteps
 }
 \examples{
 ds <- dataset

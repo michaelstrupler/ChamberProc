@@ -11,3 +11,5 @@ Encoding: UTF-8
 LazyData: true
 URL: https://github.com/michaelstrupler/ChamberProc
 BugReports: https://github.com/michaelstrupler/ChamberProc/issues
+RoxygenNote: 7.3.1
+Roxygen: list(markdown = TRUE)
