@@ -1,10 +1,10 @@
 Package: ChamberProc
 Type: Package
-Title: An adaptation of the Package [RespChamberProc](https://github.com/bgctw/RespChamberProc) for data measured with the PICARRO System
+Title: An adaptation of the Package RespChamberProc (https://github.com/bgctw/RespChamberProc) for data measured with the PICARRO System
 Version: 0.1.0
 Author:  Thomas Wutzler, Michael Strupler, Oscar Perez Priego
 Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
+Description: ChamberProc is an adaption of RespChamberProc for the use with PICARRO systems
     Use four spaces when indenting paragraphs within the Description.
 License: What license is it under?
 Encoding: UTF-8
