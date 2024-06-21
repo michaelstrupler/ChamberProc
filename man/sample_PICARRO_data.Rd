@@ -29,7 +29,7 @@ A data frame with 14393 rows and 18 variables:
 }
 }
 \usage{
-data(sample_PICARRO_data)
+sample_PICARRO_data
 }
 \description{
 In this file, some sample Picarro Data is shown. Explain better later.

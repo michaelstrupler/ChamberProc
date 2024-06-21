@@ -1,10 +1,7 @@
 #' Sample_Picarro_data
 #'
 #' In this file, some sample Picarro Data is shown. Explain better later.
-#'
-#' @docType data
-#' @name sample_PICARRO_data
-#' @usage data(sample_PICARRO_data)
+
 #' @format A data frame with 14393 rows and 18 variables:
 #' \describe{
 #'   \item{DATE}{Description of column 1}
