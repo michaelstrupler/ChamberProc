@@ -16,6 +16,7 @@
 #'   - `rel_humidity`: Relative humidity at 2m above ground. (%)
 #'   - `shortwave_radiation`: Shortwave radiation (W/m²)
 #'   - `ET0`: Reference Evapotranspiration of a well-watered grass field (mm)
+#'   - `VPD`: Vapor Pressure Deficit.  (kPa)
 #'
 #' @export
 #'
@@ -34,8 +35,8 @@ getAdditionalWeatherVariables <- function(latDeciDeg,lonDeciDeg,starttime,endtim
 
   ## Create a data frame with the coordinates (Geographical Coordinates (decimal degrees); crs =4326)
   sampling_location<- data.frame(
-    lat = latDeciDeg, #37.91514875822371
-    lon = lonDeciDeg #-4.72405536319233,
+    lat = latDeciDeg, #37.915
+    lon = lonDeciDeg #-4.724
   )
 
   ## Convert the data frame to an sf object
@@ -45,24 +46,21 @@ getAdditionalWeatherVariables <- function(latDeciDeg,lonDeciDeg,starttime,endtim
 
   ## get historical hourly weather variables from the Open-Meteo API
   temperature <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="temperature_2m",timezone = "UTC") #Temperature 2m above ground
-  atmospheric_pressure_msl <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="pressure_msl",timezone = "UTC") # multiply by 100 to convert from hPa to Pa
-
+  atmospheric_pressure_surface <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="surface_pressure",timezone = "UTC") # multiply by 100 to convert from hPa to Pa
   relative_humidity <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="relative_humidity_2m",timezone = "UTC") # unit %
   sw_radiation <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="shortwave_radiation",timezone = "UTC") # unit: W/m^2
   ref_evapotranspiration <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="et0_fao_evapotranspiration",timezone = "UTC") # unit:mm
-
-  ## Convert atmospheric pressure from sea level to pressure at altitude and convert to Pa
-  scale_height <- 8400 # meters
-  atmospheric_pressure <- atmospheric_pressure_msl %>% mutate(.,hourly_pressure_location_Pa=100*hourly_pressure_msl*exp(-sampling_location_elevation$elevation / scale_height))
+  vapour_pressure_deficit <- openmeteo::weather_history(location=c(sampling_location$lat,sampling_location$lon),start=starttime,end=endtime,hourly="vapour_pressure_deficit",timezone = "UTC") # unit: kPa
 
   ## Return the results
   return(tibble(DATETIME_hourly=temperature$datetime
                 ,h=sampling_location_elevation$elevation
                 ,AirTemp=temperature$hourly_temperature_2m
-                ,Pa = atmospheric_pressure$hourly_pressure_location_Pa
+                ,Pa=atmospheric_pressure_surface$hourly_surface_pressure*100
                 ,rel_humidity=relative_humidity$hourly_relative_humidity_2m
                 ,shortwave_radiation=sw_radiation$hourly_shortwave_radiation
-                ,ET0=ref_evapotranspiration$hourly_et0_fao_evapotranspiration))
+                ,ET0=ref_evapotranspiration$hourly_et0_fao_evapotranspiration
+                ,VPD=vapour_pressure_deficit$hourly_vapour_pressure_deficit))
 }
 
 

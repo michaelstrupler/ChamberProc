@@ -24,6 +24,7 @@ A tibble containing the following environmental variables:
 \item \code{rel_humidity}: Relative humidity at 2m above ground. (\%)
 \item \code{shortwave_radiation}: Shortwave radiation (W/m²)
 \item \code{ET0}: Reference Evapotranspiration of a well-watered grass field (mm)
+\item \code{VPD}: Vapor Pressure Deficit.  (kPa)
 }
 }
 \description{
