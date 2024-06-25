@@ -16,7 +16,8 @@ Roxygen: list(markdown = TRUE)
 Imports: 
     elevatr,
     openmeteo,
-    RespChamberProc (>= 0.6.5)
+    RespChamberProc (>= 0.6.5),
+    sf
 Remotes: 
     github::bgctw/RespChamberProc/collarchunk
 Depends: 
