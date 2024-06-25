@@ -11,8 +11,8 @@
 #' labels_CO2 <- chunk_labels(dsChunk, CO2_dry, 1.05)
 chunk_labels <- function(dsChunk, gas_column, y_multiplier) {
   dsChunk %>%
-    group_by(iChunk) %>%
-    summarise(
+    dplyr::group_by(iChunk) %>%
+    dplyr::summarise(
       collar = first(collar),  # Use the Collar value for each iChunk
       x = max(TIMESTAMP),      # Use max TIMESTAMP for x position
       y = max({{ gas_column }}) * y_multiplier  # Use slightly above max gas value for y position
