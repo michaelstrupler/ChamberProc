@@ -95,7 +95,8 @@ ds$VPD <- calcVPD( ds$AirTemp, ds$Pa, ds$H2Oppt) ## Here we calculate plant-to-a
 Plots of the whole time series give a good overview about the data.
 
 ```{r}
-p_collar <- plot(ds$TIMESTAMP,ds$collar, pch = ".", ylab = "collar (Chamber)",xlab = "Time")
+p_collar <- ggplot(ds)+
+  geom_point(aes(x=TIMESTAMP, y=collar))
 
 ds_gas_long <- gather(ds, key="gas", value="value", c("CO2_dry","H2Oppt","CH4_dry","NH3_dry","N2O_dry"))
 p_gas_facet <- ggplot(ds_gas_long, aes(x=TIMESTAMP, y=value))+
@@ -115,7 +116,7 @@ p_envar_facet
 
 ```
 
-# Chunk createion
+# Chunk creation
 In order to process each measurement cycle independently, we first determine parts of the time series that are contiguous, i.e. without gaps and without change of an index variable, here variable collar. Measurement data can have non-equidistant timesteps. Too many data points may slow down calculations, therefore, data can be thinned. For each collar (chamber), specific settings can be defined in the tibble "collar_spec".
 
 ```{r chunks}

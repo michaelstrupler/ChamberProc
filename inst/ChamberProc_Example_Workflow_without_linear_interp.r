@@ -74,7 +74,8 @@ ds0$TIMESTAMP <- as.POSIXct(paste0(ds0$DATE," ",ds0$TIME), "%Y-%m-%d %H:%M:%S", 
 ds_subset <- subset(ds0, as.numeric(TIMESTAMP) >= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 08:00:00")) )
 ds_subset <- subset(ds_subset, as.numeric(TIMESTAMP) <= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 09:30:00" )) )
 
-ds <- ds_subset
+#remove columns that are not needed for further calculations
+ds <- ds_subset %>% select(.,-c(DATE,TIME,FRAC_DAYS_SINCE_JAN1,FRAC_HRS_SINCE_JAN1,JULIAN_DAYS,EPOCH_TIME,ALARM_STATUS,INST_STATUS,CHAMBER_TEMP_sync,CHAMBER_PRESSURE_sync,SWITCH_sync,SOIL_TEMP_sync))
 
 # Correct gases -----------------------------------------------------------
 
@@ -147,8 +148,8 @@ p_envar_facet
 dsChunk_raw <- subsetContiguous(ds, colTime = "TIMESTAMP", colIndex = "collar",
                             gapLength = 12, minNRec = 180, minTime = 180, indexNA = 13)
 
-# thin data (select the thinning interval, here: 2) to make calculations more efficient
-dsChunk <- dsChunk_raw %>% group_by(iChunk) %>% slice(seq(1, n(), 8)) %>% ungroup()
+# thin data (select the thinning interval to make calculations more efficient
+dsChunk <- dsChunk_raw #%>% group_by(iChunk) %>% slice(seq(1, n(), 2)) %>% ungroup()
 
 mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(collar)) %>%  head()
 
@@ -156,8 +157,9 @@ mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(coll
 ## DataFrame collar_spec then needs to specify for each collar id in column collar,
 # the colums area (m2) and volume (m3), as well a tlag (s), the lag time between start of the cycle , i.e. the start of the chunk (usually chamber closing time), and the time when the gas reaches the sensor.
 
-chamberVol = 0.6*0.6*0.6		# chamber was a cube of 0.6m length
-surfaceArea = 0.6*0.6
+chamberVol = 0.4*0.4*0.4		# cdefine here chamber volume and surface area
+surfaceArea = 0.4*0.4
+
 collar_spec <- tibble(
   collar = unique(dsChunk$collar),
   depth = pmax(0,rnorm(length(collar), mean = 0.03, sd = 0.015)),
@@ -191,16 +193,15 @@ p_NH3 <- chunk_plot(dsChunk, NH3_dry, labels_NH3)
 # Determine fits for selected chunks and compute the flux --------------------------------------
 
 ##select just one chunk
-selected_chunk=5
-df_raw<-filter(dsChunk,iChunk==selected_chunk)
-
+selected_chunk=4
+df<-filter(dsChunk,iChunk==selected_chunk)
 
 resFit <- calcClosedChamberFlux(df
                                 , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
                                 , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                 , colConc = "CO2_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
                                 , colTemp = "AirTemp", colPressure = "Pa"		#Temp in degC, Pressure in Pa
-                                , volume = 0.4*0.4*0.4, area = 0.4*0.4
+                                , volume = chamberVol, area = surfaceArea
                                 , minTLag = 60,  maxLag = 120
                                 , concSensitivity = 0.01
 )
@@ -211,9 +212,9 @@ resH2OFit <- calcClosedChamberFlux(df
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "H2Oppt", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = 0.4*0.4*0.4, area = 0.4*0.4
-                                   , minTLag = 60,  maxLag = 120,
-                                   , concSensitivity = 0.01
+                                   , volume = chamberVol, area = surfaceArea
+                                   , minTLag = 120,  maxLag = 150,
+                                   , concSensitivity = 0.1
 )
 
 
@@ -222,7 +223,7 @@ resCH4Fit <- calcClosedChamberFlux(df
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "CH4_dry", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = 0.4*0.4*0.4, area = 0.4*0.4
+                                   , volume = chamberVol, area = surfaceArea
                                    , minTLag = 60,  maxLag = 120
                                    , concSensitivity = 0.01
 )
@@ -233,7 +234,7 @@ resNH3Fit <- calcClosedChamberFlux(df
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "NH3_dry", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = 0.4*0.4*0.4, area = 0.4*0.4
+                                   , volume = chamberVol, area = surfaceArea
                                    , minTLag = 60,  maxLag = 120
                                    , concSensitivity = 0.01
 )
@@ -244,12 +245,14 @@ resN2OFit <- calcClosedChamberFlux(df
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "N2O_dry", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = 0.4*0.4*0.4, area = 0.4*0.4
+                                   , volume = chamberVol, area = surfaceArea
                                    , minTLag = 30,  maxLag = 150
                                    , concSensitivity = 0.01
 )
 
 ## plot the fits
+# par(mfrow = c(5, 1))
+
 plotResp(df, resFit, label = paste("Chunk",selected_chunk,sep = " "))
 
 plotResp(df, resH2OFit,colConc = "H2Oppt",ylab="H2O (ppt)",xlab="time (Minute:Second)", label = paste("Chunk",selected_chunk,sep = " "))
@@ -261,66 +264,97 @@ plotResp(df, resNH3Fit,colConc = "NH3_dry",ylab="NH3_dry (ppm)",xlab="time (Minu
 plotResp(df, resN2OFit,colConc = "N2O_dry",ylab="N2O_dry (ppm)",xlab="time (Minute:Second)", label = paste("Chunk",selected_chunk,sep = " "))
 
 
+# Combined Plot of all Gases in one chunk!
+
+sigmaBootLeverage(df$H2Oppt,df$TIMESTAMP)
+
+
+
+
 #Duration Uncertainty for selected chunk ----------------------------------------------------
 
-# resDur <- plotDurationUncertainty(df, colConc = "CO2_dry", colTemp="AirTemp", volume = 0.4*0.4*0.4,
-#                                    fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
-#                                    )
-#                                    , maxSdFlux = 0.8
-#                                    , nDur=10
-#                                    , durations = seq(resFit$tLag,max(unlist(resFit$times)),10)
-# )
-# resDur$duration
-#
-# plot( flux ~ duration, resDur$statAll[[1]] )
-# #plot( sdFlux ~ duration, resDur$statAll[[1]] )
-#
-# resDur_H2O <- plotDurationUncertainty( df, colConc = "H2Oppt", colTemp="AirTemp", volume = 0.4*0.4*0.4,
+
+#===
+resDur <- plotDurationUncertainty( df
+                                   ,colTime = "TIMESTAMP"
+                                   ,colConc = "CO2_dry"
+                                   ,colTemp="AirTemp"
+                                   ,volume = chamberVol
+                                   ,fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
+                                   )
+                                   , maxSdFlux = 0.8 #this could be relative to the median (e.g. 10% of median)
+                                   , nDur=10
+                                   , durations = seq(100,500,10)
+)
+
+resDur$duration
+resDur
+plot( flux ~ duration, resDur$statAll[[1]] )
+
+resDur_H2O <- plotDurationUncertainty( df
+                                   ,colTime = "TIMESTAMP"
+                                   ,colConc = "H2Oppt"
+                                   ,colTemp="AirTemp"
+                                   ,volume = chamberVol
+                                   ,fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
+                                   )
+                                   , maxSdFlux = 0.8 #this could be relative to the median (e.g. 10% of median)
+                                   , nDur=20
+                                   , durations = seq(resH2OFit$tLag,max(unlist(resH2OFit$times)),by=20)
+
+)
+
+resDur_H2O$duration
+resDur_H2O
+plot( flux ~ duration, resDur_H2O$statAll[[1]] )
+
+# plot( sdFlux ~ duration, resDur$statAll[[1]] )
+
+# resDur_H2O <- plotDurationUncertainty( df, colConc = "H2Oppt", colTemp="AirTemp", volume = chamberVol,
 #                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
 #                                        )
 #                                        , maxSdFlux = 0.8
 #                                        , nDur=10
-#                                        , durations = seq(resH2OFit$tLag,max(unlist(resH2OFit$times)),10)
-#                                        )
-# resDur_H2O$duration
+#                                        , durations = seq(0,180,10)
+# )
 #
 # plot( flux ~ duration, resDur_H2O$statAll[[1]] )
 # plot( sdFlux ~ duration, resDur_H2O$statAll[[1]] )
-#
-# resDur_CH4 <- plotDurationUncertainty( df, colConc = "CH4_dry", colTemp="AirTemp", volume = 0.6*0.6*0.6,
-#                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
-#                                        )
-#                                        , maxSdFlux = 0.8
-#                                        , nDur=10
-#                                        , durations = seq(resCH4Fit$tLag,max(unlist(resCH4Fit$times)),10)
-#                                         )
-#
-# plot( flux ~ duration, resDur_CH4$statAll[[1]] )
-# plot( sdFlux ~ duration, resDur_CH4$statAll[[1]] )
-#
-# resDur_NH3 <- plotDurationUncertainty( df, colConc = "NH3_dry", colTemp="AirTemp", volume = 0.6*0.6*0.6,
-#                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
-#                                        )
-#                                        , maxSdFlux = 0.8
-#                                        , nDur=10
-#                                        , durations = seq(resNH3Fit$tLag,max(unlist(resNH3Fit$times)),10)
-#                                         )
-#
-# plot( flux ~ duration, resDur_NH3$statAll[[1]] )
-# plot( sdFlux ~ duration, resDur_NH3$statAll[[1]] )
-#
-# resDur_N2O <- plotDurationUncertainty( df, colConc = "N2O_dry", colTemp="AirTemp", volume = 0.6*0.6*0.6,
-#                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
-#                                        )
-#                                        , maxSdFlux = 0.8
-#                                        , nDur=10
-#                                        , durations = seq(resN2OFit$tLag,max(unlist(resN2OFit$times)),10)
-# )
-#
-# plot( flux ~ duration, resDur_N2O$statAll[[1]] )
-# plot( sdFlux ~ duration, resDur_N2O$statAll[[1]] )
+
+resDur_CH4 <- plotDurationUncertainty( df, colConc = "CH4_dry", colTemp="AirTemp", volume = chamberVol,
+                                       fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
+                                       )
+                                       , maxSdFlux = 0.8
+                                       , nDur=10
+                                       , durations = seq(30,180,30)
+)
+
+plot( flux ~ duration, resDur_CH4$statAll[[1]] )
+resDur_CH4
 
 
+resDur_NH3 <- plotDurationUncertainty( df, colConc = "NH3_dry", colTemp="AirTemp", volume = chamberVol,
+                                       fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
+                                       )
+                                       , maxSdFlux = 0.8
+                                       , nDur=10
+                                       , durations = seq(30,180,30)
+)
+
+resDur_NH3
+plot( flux ~ duration, resDur_NH3$statAll[[1]] )
+
+
+resDur_N2O <- plotDurationUncertainty( df, colConc = "N2O_dry", colTemp="AirTemp", volume = chamberVol,
+                                       fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
+                                       )
+                                       , maxSdFlux = 0.8
+                                       , nDur=10
+                                       , durations = seq(30,180,30)
+)
+
+resDur_N2O
+plot( flux ~ duration, resDur_N2O$statAll[[1]] )
 
 # Calculate fluxes for all chunks -----------------------------------------
 # Computing the fluxes in a field campaign --------------------------------
