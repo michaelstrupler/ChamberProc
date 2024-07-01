@@ -192,7 +192,7 @@ p_NH3 <- chunk_plot(dsChunk, NH3_dry, labels_NH3)
 
 ##select just one chunk
 selected_chunk=4
-df_raw<-filter(dsChunk,iChunk==selected_chunk)
+df<-filter(dsChunk,iChunk==selected_chunk)
 
 
 
@@ -213,7 +213,7 @@ resH2OFit <- calcClosedChamberFlux(df
                                    , colConc = "H2Oppt", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
                                    , volume = 0.4*0.4*0.4, area = 0.4*0.4
-                                   , minTLag = 60,  maxLag = 120,
+                                   , minTLag = 120,  maxLag = 150,
                                    , concSensitivity = 0.01
 )
 
@@ -306,7 +306,7 @@ res <- calcClosedChamberFluxForChunkSpecs(
     , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
     , colConc = "H2Oppt", colTime = "TIMESTAMP"
     , concSensitivity = 0.01
-    , minTLag= 60
+    , minTLag= 120
     , maxLag = 200
   )
 #
