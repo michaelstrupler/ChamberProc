@@ -75,7 +75,9 @@ ds0$TIMESTAMP <- as.POSIXct(paste0(ds0$DATE," ",ds0$TIME), "%Y-%m-%d %H:%M:%S", 
 ds_subset <- subset(ds0, as.numeric(TIMESTAMP) >= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 08:00:00")) )
 ds_subset <- subset(ds_subset, as.numeric(TIMESTAMP) <= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 09:30:00" )) )
 
-ds <- ds_subset
+#remove columns that are not needed for further calculations
+ds <- ds_subset %>% select(.,-c(DATE,TIME,FRAC_DAYS_SINCE_JAN1,FRAC_HRS_SINCE_JAN1,JULIAN_DAYS,EPOCH_TIME,ALARM_STATUS,INST_STATUS,CHAMBER_TEMP_sync,CHAMBER_PRESSURE_sync,SWITCH_sync,SOIL_TEMP_sync))
+
 
 # Correct gases -----------------------------------------------------------
 
@@ -160,7 +162,7 @@ chamberVol = 0.6*0.6*0.6		# chamber was a cube of 0.6m length
 surfaceArea = 0.6*0.6
 collar_spec <- tibble(
   collar = unique(dsChunk$collar),
-  depth = pmax(0,rnorm(length(collar), mean = 0.03, sd = 0.015)),
+  depth = 0, #pmax(0,rnorm(length(collar), mean = 0.03, sd = 0.015)),
   area = surfaceArea,
   volume = chamberVol + surfaceArea * depth,
   tlag = NA)
@@ -428,15 +430,27 @@ print( res_facets_H2O$plot[[1]])
 
 
 #Duration Uncertainty for selected chunk ----------------------------------------------------
+# Double chekc plotDurationUncertainty code
+
+a <- plotDurationUncertainty(df, colTime = "TIMESTAMP",colConc = "CO2_dry",colTemp="AirTemp", volume = chamberVol,
+                             fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
+                             ), maxSdFlux = 0.5 #this should be relative to the median (e.g. 10% von median)
+                             , nDur=10
+                             , durations = seq(collar_spec_CO2$tlag[1],max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),20)
+)
+
+
+
+
 source("plotDurationUncertaintyRelSD.R")
 
 
 resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
                                    fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
                                    )
-                                   , maxSdFluxRel = 1 #this should be relative to the median (e.g. 10% von median)
+                                   , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
                                    , nDur=10
-                                   , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),30)
+                                   , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),20)
 )
 resDur$duration
 
@@ -448,7 +462,7 @@ resDur_H2O <- plotDurationUncertaintyRelSD( df, colConc = "H2Oppt", colTemp="Air
                                        )
                                        , maxSdFluxRel = 1
                                        , nDur=10
-                                       , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),30)
+                                       , durations = seq(120,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),10)
 )
 
 plot( flux ~ duration, resDur_H2O$statAll[[1]] )
@@ -457,9 +471,9 @@ plot( sdFlux ~ duration, resDur_H2O$statAll[[1]] )
 resDur_CH4 <- plotDurationUncertaintyRelSD( df, colConc = "CH4_dry", colTemp="AirTemp", volume = chamberVol,
                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
                                        )
-                                       , maxSdFluxRel = 0.4
+                                       , maxSdFluxRel = 0.5
                                        , nDur=10
-                                       , durations = seq(60,600,30)
+                                       , durations = seq(50,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),30)
 )
 
 plot( flux ~ duration, resDur_CH4$statAll[[1]] )
