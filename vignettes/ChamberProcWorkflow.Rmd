@@ -1,6 +1,8 @@
 ---
 title: "ChamberProcWorkflow"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette
+    keep_md: true
 vignette: >
   %\VignetteIndexEntry{ChamberProcWorkflow}
   %\VignetteEngine{knitr::rmarkdown}
@@ -303,3 +305,4 @@ The fitted form (solid line) approximates the change of measured concentration (
 
 
 # Duration uncertainty
+
