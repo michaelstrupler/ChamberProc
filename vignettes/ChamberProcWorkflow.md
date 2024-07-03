@@ -16,80 +16,28 @@ This vignette explains how to use the package ChamberProc for Picarro data. The 
 First, the necessary libraries are loaded:
 
 
-```
-#> Loading required package: zoo
-#> 
-#> Attaching package: 'zoo'
-#> The following objects are masked from 'package:base':
-#> 
-#>     as.Date, as.Date.numeric
-#> Successfully loaded changepoint package version 2.2.4
-#>  See NEWS for details of changes.
-#> Loading required package: MASS
-#> 
-#> Attaching package: 'dplyr'
-#> The following objects are masked from 'package:plyr':
-#> 
-#>     arrange, count, desc, failwith, id, mutate, rename, summarise,
-#>     summarize
-#> The following object is masked from 'package:MASS':
-#> 
-#>     select
-#> The following object is masked from 'package:nlme':
-#> 
-#>     collapse
-#> The following objects are masked from 'package:stats':
-#> 
-#>     filter, lag
-#> The following objects are masked from 'package:base':
-#> 
-#>     intersect, setdiff, setequal, union
-#> 
-#> Attaching package: 'purrr'
-#> The following object is masked from 'package:plyr':
-#> 
-#>     compact
-#> The following objects are masked from 'package:rlang':
-#> 
-#>     %@%, flatten, flatten_chr, flatten_dbl, flatten_int, flatten_lgl,
-#>     flatten_raw, invoke, splice
-#> 
-#> Attaching package: 'data.table'
-#> The following object is masked from 'package:purrr':
-#> 
-#>     transpose
-#> The following objects are masked from 'package:dplyr':
-#> 
-#>     between, first, last
-#> The following objects are masked from 'package:zoo':
-#> 
-#>     yearmon, yearqtr
-#> The following object is masked from 'package:rlang':
-#> 
-#>     :=
-#> 
-#> Attaching package: 'lubridate'
-#> The following objects are masked from 'package:data.table':
-#> 
-#>     hour, isoweek, mday, minute, month, quarter, second, wday, week,
-#>     yday, year
-#> The following objects are masked from 'package:base':
-#> 
-#>     date, intersect, setdiff, union
-#> Loading required package: foreach
-#> 
-#> Attaching package: 'foreach'
-#> The following objects are masked from 'package:purrr':
-#> 
-#>     accumulate, when
-#> Loading required package: iterators
-#> Loading required package: snow
-#> Loading required package: future
-#> elevatr v0.99.0 NOTE: Version 0.99.0 of 'elevatr' uses 'sf' and 'terra'.  Use 
-#> of the 'sp', 'raster', and underlying 'rgdal' packages by 'elevatr' is being 
-#> deprecated; however, get_elev_raster continues to return a RasterLayer.  This 
-#> will be dropped in future versions, so please plan accordingly.
-#> Linking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE
+``` r
+# load libraries
+library(ChamberProc)
+library(RespChamberProc)
+library(rlang)
+library(changepoint)
+library(nlme)
+library(segmented)
+library(tibble)
+library(plyr)
+library(dplyr)
+library(purrr)
+library(stringr)
+library(ggplot2)
+library(data.table)
+library(lubridate)
+library(tidyr)
+library(doSNOW)
+library(furrr)
+library(elevatr)
+library(sf)
+library(openmeteo) #retrieves historical weather data from https://open-meteo.com/en/docs/historical-weather-api
 ```
 
 # Preparing the chamber data
@@ -151,11 +99,6 @@ Alternatively, values for  and  ,and  can be assigned manually.
 ``` r
 
 Additional_Weather_Data <- getAdditionalWeatherVariables(latDeciDeg, lonDeciDeg,format(min(ds$TIMESTAMP),"%Y-%m-%d"),format(max(ds$TIMESTAMP),"%Y-%m-%d"))
-#> Mosaicing & Projecting
-#> Note: Elevation units are in meters
-```
-
-``` r
 
 # For the case of PICARRO IRGA gives dry mole fractions for CO2, N2O, CH4, but not for NH3 and H2O
 ds$solenoid_valvesInt<-  ds$solenoid_valves %>% as.integer()
@@ -273,12 +216,12 @@ head(collar_spec)
 #> # A tibble: 6 × 5
 #>   collar  depth  area volume tlag 
 #>    <int>  <dbl> <dbl>  <dbl> <lgl>
-#> 1      1 0.0344  0.36  0.228 NA   
-#> 2      2 0.0167  0.36  0.222 NA   
-#> 3      3 0.0223  0.36  0.224 NA   
-#> 4      4 0.0563  0.36  0.236 NA   
-#> 5      5 0.0116  0.36  0.220 NA   
-#> 6      6 0.0214  0.36  0.224 NA
+#> 1      1 0.0149  0.36  0.221 NA   
+#> 2      2 0.0357  0.36  0.229 NA   
+#> 3      3 0.0320  0.36  0.228 NA   
+#> 4      4 0       0.36  0.216 NA   
+#> 5      5 0.0205  0.36  0.223 NA   
+#> 6      6 0.0234  0.36  0.224 NA
 ```
 
 # Plots of individual chunks

@@ -20,7 +20,7 @@ This vignette explains how to use the package ChamberProc for Picarro data. The 
 
 First, the necessary libraries are loaded:
 
-```{r setup, echo=F}
+```{r setup, message=F}
 # load libraries
 library(ChamberProc)
 library(RespChamberProc)
@@ -83,7 +83,7 @@ head(ds)
 The PICARRO IRGA gives dry mole fractions for CO2, N2O, CH4, but not for NH3 and H2O. Therefore these gases have to be corrected. Additional envrionmental data (h, Pa and AirTemp are crucial) is loaded with the function "Additional_Weather_Data", which downloads meteorological data from the www.open-meteo.com API via the package "openmeteo" and elevation data from the "elevatR" package. The weather data comes in an hourly interval.
 Alternatively, values for `r ds$h` and `r ds$AirTemp` ,and `r ds$AirTemp` can be assigned manually.
 
-```{r}
+```{r, message=FALSE}
 
 Additional_Weather_Data <- getAdditionalWeatherVariables(latDeciDeg, lonDeciDeg,format(min(ds$TIMESTAMP),"%Y-%m-%d"),format(max(ds$TIMESTAMP),"%Y-%m-%d"))
 
