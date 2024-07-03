@@ -207,106 +207,100 @@ p_NH3 <- chunk_plot(dsChunk, NH3_dry, labels_NH3)
 p_CO2
 ```
 
-# Calculation of the gas fluxes
+# Calculation of the gas fluxes for multiple chunks
 ```{r}
-# Determine fits for selected chunks and compute the flux --------------------------------------
+#One can save processing time and avoid failures in the non-robust breakpoint-detection by specifying a fixed lag-time (may differ across collars) with the collar specification.
+collar_spec_CO2 <-mutate(collar_spec, tlag = 60) 
+collar_spec_H2O <-mutate(collar_spec, tlag = 60)
+collar_spec_CH4 <-mutate(collar_spec, tlag = 60)
+collar_spec_NH3 <-mutate(collar_spec, tlag = 60)
+collar_spec_N2O <-mutate(collar_spec, tlag = 120)
 
-##select just one chunk
-selected_chunk=4
-df<-filter(dsChunk,iChunk==selected_chunk)
+# parallel computing
+plan(multisession, workers = 4) 
 
-
-resFit <- calcClosedChamberFlux(df
-                                , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-                                , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-                                , colConc = "CO2_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
-                                , colTemp = "AirTemp", colPressure = "Pa"		#Temp in degC, Pressure in Pa
-                                , volume = chamberVol, area = surfaceArea
-                                , minTLag = 60,  maxLag = 120
-                                , concSensitivity = 0.01
+res_CO2 <- calcClosedChamberFluxForChunkSpecs(
+  dsChunk, collar_spec_CO2
+  , colTemp = "AirTemp", colPressure = "Pa"
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+  , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
+  , colConc = "CO2_dry", colTime = "TIMESTAMP"
+  , concSensitivity = 0.01
 )
 
 
-resH2OFit <- calcClosedChamberFlux(df
-                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-                                   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-                                   , colConc = "H2Oppt", colTime = "TIMESTAMP"
-                                   , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = chamberVol, area = surfaceArea
-                                   , minTLag = 120,  maxLag = 150,
-                                   , concSensitivity = 0.01
+res_NH3 <- calcClosedChamberFluxForChunkSpecs(
+  dsChunk, collar_spec_NH3
+  , colTemp = "AirTemp", colPressure = "Pa"
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+  , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
+  , colConc = "NH3_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
+  , concSensitivity = 0.01
 )
 
-
-resCH4Fit <- calcClosedChamberFlux(df
-                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-                                   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-                                   , colConc = "CH4_dry", colTime = "TIMESTAMP"
-                                   , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = chamberVol, area = surfaceArea
-                                   , minTLag = 50,  maxLag = 150
-                                   , concSensitivity = 0.01
+res_CH4 <- calcClosedChamberFluxForChunkSpecs(
+  dsChunk, collar_spec_CH4
+  , colTemp = "AirTemp", colPressure = "Pa"
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+  , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
+  , colConc = "CH4_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
+  , concSensitivity = 0.01
 )
 
-
-resNH3Fit <- calcClosedChamberFlux(df
-                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-                                   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-                                   , colConc = "NH3_dry", colTime = "TIMESTAMP"
-                                   , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = chamberVol, area = surfaceArea
-                                   , minTLag = 50,  maxLag = 120
-                                   , concSensitivity = 0.01
+res_N2O <- calcClosedChamberFluxForChunkSpecs(
+  dsChunk, collar_spec_N2O
+  , colTemp = "AirTemp", colPressure = "Pa"
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+  , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
+  , colConc = "N2O_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
+  , concSensitivity = 0.01
 )
 
-
-resN2OFit <- calcClosedChamberFlux(df
-                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-                                   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-                                   , colConc = "N2O_dry", colTime = "TIMESTAMP"
-                                   , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = chamberVol, area = surfaceArea
-                                   , minTLag = 120,  maxLag = 180
-                                   , concSensitivity = 0.01
+res_H2O <- calcClosedChamberFluxForChunkSpecs(
+  dsChunk, collar_spec_H2O
+  , colTemp = "AirTemp", colPressure = "Pa"
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+  , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
+  , colConc = "H2Oppt", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
+  , concSensitivity = 0.01
 )
 
 ```
+
 
 # Inspection of the results
 The results can be inspected:
-Its a one-row tibble with fitting statistics and fitted model objects. While all the first columns are numeric, column times holds a vector of times after lag-phase for which concentration predictions have been made by the model object given in column model (see explanations on the graph below).
-
-The most important information are the estimate of the flux, and its uncertainty, both in unit mumol/m2/s:
-
 ```{r}
-resFit[,c("flux","sdFlux")]
+res
 ```
 
-Or in gC/m2/day:
-
-```{r}
-fluxInMuMol <- unlist(resFit[,c("flux","sdFlux")])
-convert_mumolPers_to_gPerday(fluxInMuMol)
-```
 
 
 # Visualisation of the results
 The results can be visualized in a plot:
 ```{r}
-## plot the fits
-plotResp(df, resFit, label = paste("Chunk",selected_chunk,sep = " "))
+#Plot the results including the fits as facet plots
+res_facets_CO2 <- plotCampaignConcSeries(ds=dsChunk,varName = "CO2_dry",dsFits = res_CO2, plotsPerPage = 64L,fileName =paste0(results_dir,"/CO2_fit_facets.pdf")) #fileName =paste0(results_dir,"/CO2_fit_facets.pdf") )
+print( res_facets_CO2$plot[[1]])
 
-plotResp(df, resH2OFit,colConc = "H2Oppt",ylab="H2O (ppt)",xlab="time (Minute:Second)", label = paste("Chunk",selected_chunk,sep = " "))
 
-plotResp(df, resCH4Fit,colConc = "CH4_dry",ylab="CH4_dry (ppm)",xlab="time (Minute:Second)", label = paste("Chunk",selected_chunk,sep = " "))
+res_facets_NH3 <- plotCampaignConcSeries(ds=dsChunk,varName = "NH3_dry",dsFits = res_NH3, plotsPerPage = 64L,fileName =paste0(results_dir,"/NH3_fit_facets.pdf")) #fileName =paste0(results_dir,"/CO2_fit_facets.pdf") )
+print( res_facets_NH3$plot[[1]])
 
-plotResp(df, resNH3Fit,colConc = "NH3_dry",ylab="NH3_dry (ppm)",xlab="time (Minute:Second)", label = paste("Chunk",selected_chunk,sep = " "))
 
-plotResp(df, resN2OFit,colConc = "N2O_dry",ylab="N2O_dry (ppm)",xlab="time (Minute:Second)", label = paste("Chunk",selected_chunk,sep = " "))
+res_facets_CH4 <- plotCampaignConcSeries(ds=dsChunk,varName = "CH4_dry",dsFits = res_CH4, plotsPerPage = 64L,fileName =paste0(results_dir,"/CH4_fit_facets.pdf")) #fileName =paste0(results_dir,"/CO2_fit_facets.pdf") )
+print( res_facets_CH4$plot[[1]])
+
+res_facets_N2O <- plotCampaignConcSeries(ds=dsChunk,varName = "N2O_dry",dsFits = res_N2O, plotsPerPage = 64L,fileName =paste0(results_dir,"/N2O_fit_facets.pdf")) #fileName =paste0(results_dir,"/CO2_fit_facets.pdf") )
+print( res_facets_N2O$plot[[1]])
+
+
+res_facets_H2O <- plotCampaignConcSeries(ds=dsChunk,varName = "H2Oppt",dsFits = res_H2O, plotsPerPage = 64L,fileName =paste0(results_dir,"/H2O_fit_facets.pdf")) #fileName =paste0(results_dir,"/CO2_fit_facets.pdf") )
+print( res_facets_H2O$plot[[1]])
+
 ```
 
 The fitted form (solid line) approximates the change of measured concentration (points) over time. Usually there is a lag-time (dotted vertical line) between concentration change, and when the time when the signal reaches the sensor. The flux after the intial lag-time is reported at the top left together with its uncertainty in mumol/m2/s. The label can be provided to distinguish different measurement cycles.
 
 
-# Duration uncertainty
 
