@@ -449,7 +449,7 @@ resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTem
                                    fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
                                    )
                                    , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
-                                   , nDur=10
+                                   , nDur=2
                                    , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),20)
 )
 resDur$duration
@@ -460,7 +460,7 @@ plot( sdFlux ~ duration, resDur$statAll[[1]] )
 resDur_H2O <- plotDurationUncertaintyRelSD( df, colConc = "H2Oppt", colTemp="AirTemp", volume = chamberVol,
                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
                                        )
-                                       , maxSdFluxRel = 1
+                                       , maxSdFluxRel = 0.5
                                        , nDur=10
                                        , durations = seq(120,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),10)
 )
