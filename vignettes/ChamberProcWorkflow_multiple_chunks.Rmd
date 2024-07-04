@@ -173,7 +173,7 @@ mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(coll
 
 collar_spec <- tibble(
   collar = unique(dsChunk$collar),
-  depth = 0,
+  depth = rnorm(9,0.1,0.01), #here the depth of each chamber needs to be defined
   area = surfaceArea,
   volume = chamberVol + surfaceArea * depth,
   tlag = NA)
@@ -210,7 +210,7 @@ p_CO2
 # Calculation of the gas fluxes for multiple chunks
 ```{r}
 #One can save processing time and avoid failures in the non-robust breakpoint-detection by specifying a fixed lag-time (may differ across collars) with the collar specification.
-collar_spec_CO2 <-mutate(collar_spec, tlag = 60) 
+collar_spec_CO2 <-mutate(collar_spec, tlag = 60,depth = 0.1, volume =  chamberVol + surfaceArea * depth )  # volume has to be re-calculated here otherwise only depth column will change if we mutate depth
 collar_spec_H2O <-mutate(collar_spec, tlag = 60)
 collar_spec_CH4 <-mutate(collar_spec, tlag = 60)
 collar_spec_NH3 <-mutate(collar_spec, tlag = 60)
@@ -235,7 +235,7 @@ res_NH3 <- calcClosedChamberFluxForChunkSpecs(
   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "NH3_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
-  , concSensitivity = 0.01
+  , concSensitivity = 0.1
 )
 
 res_CH4 <- calcClosedChamberFluxForChunkSpecs(
