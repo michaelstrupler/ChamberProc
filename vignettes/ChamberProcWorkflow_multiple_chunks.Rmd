@@ -65,7 +65,6 @@ Sometimes, not the entire time series that was loaded is needed, therefore the d
 ```{r load-data}
 ds0 <- sample_PICARRO_data
 
-
 #create timestamp from date and time columns
 ds0$TIMESTAMP <- as.POSIXct(paste0(ds0$DATE," ",ds0$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
 
