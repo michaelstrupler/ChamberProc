@@ -56,6 +56,10 @@ lonDeciDeg <- -4.72405536319233 #enter here longitude in Decimal Degrees
 chamberVol = 0.6*0.6*0.6		
 surfaceArea = 0.6*0.6
 
+#path to results folder
+dir.create("results")
+results_dir <- "results/"
+  
 ```
 
 The data is loaded. This is a typical data.frame as obtained from a logger file of a PICARRO chamber. Sensor readings from various gases are recorded for sometimes non-equidistant timestamps <1 sec. In the following example, the sample dataset "sample_PICARRO_data" that comes with the "ChamberProc" package is used.
@@ -210,7 +214,7 @@ p_CO2
 ```{r}
 #One can save processing time and avoid failures in the non-robust breakpoint-detection by specifying a fixed lag-time (may differ across collars) with the collar specification.
 collar_spec_CO2 <-mutate(collar_spec, tlag = 60,depth = 0.1, volume =  chamberVol + surfaceArea * depth )  # volume has to be re-calculated here otherwise only depth column will change if we mutate depth
-collar_spec_H2O <-mutate(collar_spec, tlag = 60)
+collar_spec_H2O <-mutate(collar_spec, tlag = 120)
 collar_spec_CH4 <-mutate(collar_spec, tlag = 60)
 collar_spec_NH3 <-mutate(collar_spec, tlag = 60)
 collar_spec_N2O <-mutate(collar_spec, tlag = 120)
@@ -270,7 +274,12 @@ res_H2O <- calcClosedChamberFluxForChunkSpecs(
 # Inspection of the results
 The results can be inspected:
 ```{r}
-res
+res_CO2
+res_CH4
+res_N2O
+res_NH3
+res_H2O
+
 ```
 
 
