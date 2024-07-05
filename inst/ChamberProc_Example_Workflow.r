@@ -430,19 +430,6 @@ print( res_facets_H2O$plot[[1]])
 
 
 #Tests variation in lag time and duration for a single chunk
-
-resFit <- calcClosedChamberFlux(df
-                                , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-                                , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-                                , colConc = "CO2_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
-                                , colTemp = "AirTemp", colPressure = "Pa"		#Temp in degC, Pressure in Pa
-                                , volume = chamberVol, area = surfaceArea
-                                , useFixedTLag = 60
-                                , concSensitivity = 0.01
-)
-
-plotResp(df, resFit, label = paste("Chunk",selected_chunk,sep = " "))
-
 ## Function to test optimal time windows and tlags
 source("/Users/ms/Research Projects/Espana/UCO_Chamber/1_Test_newPackage_ChamberProc/fluxDurationTests.R")
 
@@ -450,20 +437,71 @@ source("/Users/ms/Research Projects/Espana/UCO_Chamber/1_Test_newPackage_Chamber
 # Define parameters for the function
 start_tlag <- 60
 end_tlag <- 100
-interval_tlag <- 10
+interval_tlag <- 20
 start_duration <- 80
 end_duration <- 160
-interval_duration <- 10
-colConc <- "CH4_dry" #CH4
+interval_duration <- 20
+colConc <- "CO2_dry" #CH4
 
 resTwindowLag<- fluxDurationTest(df, start_tlag, end_tlag, interval_tlag, start_duration, end_duration, interval_duration, colConc)
 
 # Access the returned objects
+fluxTibble <- resTwindowLag$fluxTibble
 fluxTibble_pivot <- resTwindowLag$fluxTibble_pivot
 summary_stats <- resTwindowLag$summary_stats
 
 fluxTibble_pivot
 summary_stats
+
+# Figure sdFlux vs Window Duration (WD)
+ggplot(data=fluxTibble, aes(x = duration, y = sdFlux, size = tLag)) +
+  geom_point(shape=1) +
+  labs(title = "Scatterplot of Duration vs sd Flux",
+       x = "Duration",
+       y = "sd Flux",
+       size = "Tlag") +
+  theme_minimal()
+
+## Figure with facet plots for each gas
+ggplot(data=fluxTibble, aes(x = duration, y = sdFlux)) +
+  geom_point() +
+  facet_wrap(~ tLag, scales = "fixed") +
+  labs(x = "WD", y = "sdFlux", title = "sd Flux vs WD for different tLags ")
+
+# create a Figure with a distribution (or histogram) of optimal Window Durations for all measurements of a gas to identify range of optimal duration
+## first define condition sd < X  or CV < X in order to define WDoptimum
+
+
+# find optimal model fit for each gas -------------------------------------
+
+res_CO2 <- res_CO2 %>% mutate(gas = "CO2")
+res_CH4 <- res_CH4 %>% mutate(gas = "CH4")
+res_H2O <- res_H2O %>% mutate(gas = "H2O")
+res_N2O <- res_N2O %>% mutate(gas = "N2O")
+
+
+# Combine the data frames
+combined_res <- bind_rows(res_CO2, res_CH4, res_H2O,res_N2O)
+combined_res <- combined_res %>% mutate(iFRegress = factor(iFRegress))
+
+# Plot the histograms of the used Models with facet wrap
+ggplot(combined_res, aes(x = iFRegress, fill = gas)) +
+  geom_bar(alpha = 0.7) +
+  facet_wrap(~ gas, scales = "free_y") +
+  scale_x_discrete(name = "Model") +
+  scale_y_continuous(name = "Count", breaks = scales::pretty_breaks(n = 10)) +
+  labs(title = "Histograms of CO2, CH4, H2O, and N2O") +
+  theme_minimal()+
+  theme(legend.position = "none")
+
+# Plot Flux vs. Window Duration (WD)
+
+
+
+
+
+
+
 
 
 
@@ -483,16 +521,16 @@ summary_stats
 # source("plotDurationUncertaintyRelSD.R")
 #
 #
-# resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
-#                                    fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
-#                                    )
-#                                    , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
-#                                    , nDur=2
-#                                    , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),20)
-# )
+#resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
+                                   fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
+                                   )
+                                   , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
+                                   , nDur=2
+                                   , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),20)
+)
 # resDur$duration
 #
-# plot( flux ~ duration, resDur$statAll[[1]] )
+#plot( flux ~ duration, resDur$statAll[[1]] )
 # plot( sdFlux ~ duration, resDur$statAll[[1]] )
 #
 # # resDur_H2O <- plotDurationUncertaintyRelSD( df, colConc = "H2Oppt", colTemp="AirTemp", volume = chamberVol,
