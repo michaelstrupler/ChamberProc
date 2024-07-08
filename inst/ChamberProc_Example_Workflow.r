@@ -7,7 +7,7 @@
 # Install necessary packages ----------------------------------------------
 # install.packages("devtools")
 # library(devtools)
-devtools::install_github("bgctw/RespChamberProc", ref="durationplo2")
+#devtools::install_github("bgctw/RespChamberProc", ref="durationplo2")
 #devtools::install_github("michaelstrupler/ChamberProc")
 # #
 # pck <- c("rlang", "changepoint", "nlme", "segmented", "tibble",  "dplyr", "purrr", "RespChamberProc","elevatr","openmeteo")
@@ -624,7 +624,7 @@ plot( sdFlux ~ duration, resDur_N2O$statAll[[1]] )
 ## first create a function "PlotDurationUncertaintyRelSD" for all chunks and load it
 source("inst/plotDurationUncertaintyRelSDforChunks.R")
 
-resDur <- plotDurationUncertaintyRelSD( dsChunk, collar_spec_CO2
+resDurChunks <- plotDurationUncertaintyRelSDforChunks( dsChunk, collar_spec_CO2
                                         , colTime= "TIMESTAMP",  colTemp="AirTemp", colPressure="Pa"
                                         , colConc = "CO2_dry", volume = chamberVol
                                         , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
@@ -634,15 +634,8 @@ resDur <- plotDurationUncertaintyRelSD( dsChunk, collar_spec_CO2
                                         , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),30)
 )
 
-resDur$duration
-#
+resDurChunks$duration
 
-res_CO2 <- calcClosedChamberFluxForChunkSpecs(
-  dsChunk, collar_spec_CO2
-  , colTemp = "AirTemp", colPressure = "Pa"
-  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-  , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-  , colConc = "CO2_dry", colTime = "TIMESTAMP"
-  , concSensitivity = 0.01
-)
+# Multiple Chunks Duration with for-loop
+
 

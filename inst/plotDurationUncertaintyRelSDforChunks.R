@@ -1,4 +1,4 @@
-plotDurationUncertaintyRelSD <- function(
+plotDurationUncertaintyRelSDforChunks <- function(
     ### plot the increase of uncertainty with decreasing measurement duration
   ds
   , colTime = "TIMESTAMP"	##<< column name of time [s]

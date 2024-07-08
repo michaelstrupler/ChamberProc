@@ -9,7 +9,7 @@ plotDurationUncertaintyRelSD <- function(
   , durations = seq( max(65,resFit0$tLag), max(times0), length.out = nDur + 1)		##<<
   ## durations to check. Default is equally spaced between tLag and maximum duration
   , nDur = 5		    ##<< number of durations to check
-  , maxSdFluxRel = 1	  ##<< maximum allowed Ratio of standard deviation of flux to flux
+  , maxSdFluxRel = 0.5	  ##<< maximum allowed Ratio of standard deviation of flux to flux
 ){
   times <- ds[[colTime]]
   times0 <- as.numeric(times) - as.numeric(times[1])
@@ -31,8 +31,8 @@ plotDurationUncertaintyRelSD <- function(
     })))
   resFits <- suppressWarnings(bind_rows(resFits0, resFit0)
                               %>% mutate(duration = c(durations,max(times0))))
-  iMinTime <- if (min(abs(resFits$sdFlux/resFits$flux), na.rm = TRUE) <= maxSdFluxRel ) {
-    min(which( abs(resFits$sdFlux/resFits$flux) <= maxSdFluxRel ))
+  iMinTime <- if (min(abs(resFits$sdFlux/resFits$fluxMedian), na.rm = TRUE) <= maxSdFluxRel ) {
+    min(which( abs(resFits$sdFlux/resFits$fluxMedian) <= maxSdFluxRel ))
   } else nrow(resFits)
   minDuration <- resFits[iMinTime,]
   ##details<<
