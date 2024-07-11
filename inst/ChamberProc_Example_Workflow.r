@@ -150,7 +150,7 @@ dsChunk_raw <- subsetContiguous(ds, colTime = "TIMESTAMP", colIndex = "collar",
                             gapLength = 12, minNRec = 180, minTime = 180, indexNA = 13)
 
 # thin data (select the thinning interval, here: 8) to make calculations more efficient
-dsChunk <- dsChunk_raw %>% group_by(iChunk) #%>% slice(seq(1, n(), 5)) %>% ungroup()
+dsChunk <- dsChunk_raw %>% group_by(iChunk) %>% slice(seq(1, n(), 5)) %>% ungroup()
 
 mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(collar)) %>%  head()
 
@@ -560,12 +560,14 @@ ggplot(combined_res, aes(x = iFRegress, fill = gas)) +
 #
 source("inst/plotDurationUncertaintyRelSD.R")
 #
+##select just one chunk
+selected_chunk=8 #error when selected chunk==7: error in `gls()`:! false convergence (8) if exponential model or polynomial is used
+df<-filter(dsChunk,iChunk==selected_chunk)
 #
 resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
-                                   fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
-                                   )
+                                   fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh)
                                    , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
-                                   , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),30)
+                                   , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),20)
 )
 resDur$duration
 #
@@ -622,20 +624,51 @@ plot( sdFlux ~ duration, resDur_N2O$statAll[[1]] )
 
 # Create histograms WDo ---------------------------------------------------
 ## first create a function "PlotDurationUncertaintyRelSD" for all chunks and load it
-source("inst/plotDurationUncertaintyRelSDforChunks.R")
-
-resDurChunks <- plotDurationUncertaintyRelSDforChunks( dsChunk, collar_spec_CO2
-                                        , colTime= "TIMESTAMP",  colTemp="AirTemp", colPressure="Pa"
-                                        , colConc = "CO2_dry", volume = chamberVol
-                                        , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-                                        , concSensitivity = 0.01
-                                        , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-                                        , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
-                                        , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),30)
-)
-
-resDurChunks$duration
-
-# Multiple Chunks Duration with for-loop
+# source("inst/plotDurationUncertaintyRelSDforChunks.R")
+# #
+# resDurChunks <- plotDurationUncertaintyRelSDforChunks( dsChunk, collar_spec_CO2
+#                                         , colTime= "TIMESTAMP",  colTemp="AirTemp", colPressure="Pa"
+#                                         , colConc = "CO2_dry", volume = chamberVol
+#                                         , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+#                                         , concSensitivity = 0.05
+#                                         , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
+#                                         , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
+#                                         , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),30)
+# )
+#
+# resDurChunks$duration
 
 
+
+# get WDoptimum for each chunk
+
+resWDur <- list()
+for (v in unique(dsChunk$iChunk)){
+  dfi <- dsChunk %>% dplyr::filter(iChunk==v)
+
+  WDur <- plotDurationUncertaintyRelSD( dfi, colConc = "NH3_dry", colTemp="AirTemp", volume = chamberVol,
+                                          fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp
+                                          )
+                                          , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
+                                          , durations = seq(60,max(as.numeric(dfi$TIMESTAMP) - as.numeric(dfi$TIMESTAMP[1])),20)
+  )
+
+  resWDur[[v]] <- WDur
+}
+
+
+## extract the chunk name and duration from the list:
+# Create a function to extract duration and list name
+extract_duration <- function(tbl_name, tbl) {
+  duration <- tbl$duration
+  list_name <- as.integer(tbl_name)
+  tibble(list_name = list_name, duration = duration)
+}
+
+# Iterate over each tibble in `resWDur`, extracting duration and list name
+WDur_tibble <- map_df(names(resWDur), ~ extract_duration(.x, resWDur[[.x]]))
+
+ggplot() +
+  geom_histogram(aes(WDur_tibble$duration), binwidth = 10, color = "black", fill= "grey") +
+  labs(title = "gas name", x = "WD optimum",
+       y = "Frequency")
