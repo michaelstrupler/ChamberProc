@@ -366,7 +366,7 @@ collar_spec_N2O <-mutate(collar_spec, tlag = 120)
 res_CO2 <- calcClosedChamberFluxForChunkSpecs(
   dsChunk, collar_spec_CO2
   , colTemp = "AirTemp", colPressure = "Pa"
-  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "CO2_dry", colTime = "TIMESTAMP"
   , concSensitivity = 0.01
@@ -375,7 +375,7 @@ res_CO2 <- calcClosedChamberFluxForChunkSpecs(
 res_NH3 <- calcClosedChamberFluxForChunkSpecs(
   dsChunk, collar_spec_NH3
   , colTemp = "AirTemp", colPressure = "Pa"
-  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "NH3_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
   , concSensitivity = 0.01
@@ -384,7 +384,7 @@ res_NH3 <- calcClosedChamberFluxForChunkSpecs(
 res_CH4 <- calcClosedChamberFluxForChunkSpecs(
   dsChunk, collar_spec_CH4
   , colTemp = "AirTemp", colPressure = "Pa"
-  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "CH4_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
   , concSensitivity = 0.01
@@ -393,7 +393,7 @@ res_CH4 <- calcClosedChamberFluxForChunkSpecs(
 res_N2O <- calcClosedChamberFluxForChunkSpecs(
   dsChunk, collar_spec_N2O
   , colTemp = "AirTemp", colPressure = "Pa"
-  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "N2O_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
   , concSensitivity = 0.01
@@ -402,7 +402,7 @@ res_N2O <- calcClosedChamberFluxForChunkSpecs(
 res_H2O <- calcClosedChamberFluxForChunkSpecs(
   dsChunk, collar_spec_H2O
   , colTemp = "AirTemp", colPressure = "Pa"
-  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "H2Oppt", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
   , concSensitivity = 0.01
@@ -649,7 +649,7 @@ for (v in unique(dsChunk$iChunk)){
   WDur <- plotDurationUncertaintyRelSD( dfi, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
                                           fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp
                                           )
-                                          , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
+                                          , maxSdFluxRel = 1 #this should be relative to the median (e.g. 10% von median)
                                           , durations = seq(60,max(as.numeric(dfi$TIMESTAMP) - as.numeric(dfi$TIMESTAMP[1])),20)
   )
 
@@ -672,3 +672,27 @@ ggplot() +
   geom_histogram(aes(WDur_tibble$duration), binwidth = 20, color = "black", fill= "grey") +
   labs(title = "gas name", x = "WD optimum",
        y = "Frequency")
+
+ggplot(WDur_tibble, aes(duration)) +
+  #geom_histogram(aes(y = ..density..), color = "#000000", fill = "#0099F8") +
+  geom_density(color = "#000000", fill = "#F85700", alpha = 0.6)
+
+
+#With coloured quantiles
+# Calculate median, 5th and 95th quantiles
+median_val <- median(WDur_tibble$duration)
+quantile_25 <- quantile(WDur_tibble$duration, 0.25)
+quantile_75 <- quantile(WDur_tibble$duration, 0.75)
+
+# Create density plot
+ggplot(WDur_tibble, aes(x = duration)) +
+  geom_density(fill = "skyblue", alpha = 0.5) +
+  geom_vline(xintercept = median_val, color = "red", linetype = "dashed", size = 1) +
+  geom_vline(xintercept = quantile_25, color = "blue", linetype = "dashed", size = 1) +
+  geom_vline(xintercept = quantile_75, color = "blue", linetype = "dashed", size = 1) +
+  labs(title = "Density Plot with Median and Quartiles",
+       x = "Duration",
+       y = "Density") +
+  theme_minimal()
+
+
