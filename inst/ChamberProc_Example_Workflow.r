@@ -73,7 +73,7 @@ ds0$TIMESTAMP <- as.POSIXct(paste0(ds0$DATE," ",ds0$TIME), "%Y-%m-%d %H:%M:%S", 
 ## The logger is accumulating data from previous field campaigns.
 #  Here we subset data from a given field campaign. (Entrar hora del inicio de observationes y fin (convert to UTC))
 ds_subset <- subset(ds0, as.numeric(TIMESTAMP) >= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 08:00:00")) )
-ds_subset <- subset(ds_subset, as.numeric(TIMESTAMP) <= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 09:30:00" )) )
+ds_subset <- subset(ds_subset, as.numeric(TIMESTAMP) <= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 12:00:00" )) )
 
 #remove columns that are not needed for further calculations
 ds <- ds_subset %>% select(.,-c(DATE,TIME,FRAC_DAYS_SINCE_JAN1,FRAC_HRS_SINCE_JAN1,JULIAN_DAYS,EPOCH_TIME,ALARM_STATUS,INST_STATUS,CHAMBER_TEMP_sync,CHAMBER_PRESSURE_sync,SWITCH_sync,SOIL_TEMP_sync))
@@ -150,7 +150,7 @@ dsChunk_raw <- subsetContiguous(ds, colTime = "TIMESTAMP", colIndex = "collar",
                             gapLength = 12, minNRec = 180, minTime = 180, indexNA = 13)
 
 # thin data (select the thinning interval, here: 8) to make calculations more efficient
-dsChunk <- dsChunk_raw %>% group_by(iChunk) %>% slice(seq(1, n(), 5)) %>% ungroup()
+dsChunk <- dsChunk_raw %>% group_by(iChunk) %>% slice(seq(1, n(), 2)) %>% ungroup()
 
 mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(collar)) %>%  head()
 
@@ -646,7 +646,7 @@ resWDur <- list()
 for (v in unique(dsChunk$iChunk)){
   dfi <- dsChunk %>% dplyr::filter(iChunk==v)
 
-  WDur <- plotDurationUncertaintyRelSD( dfi, colConc = "NH3_dry", colTemp="AirTemp", volume = chamberVol,
+  WDur <- plotDurationUncertaintyRelSD( dfi, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
                                           fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp
                                           )
                                           , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
@@ -669,6 +669,6 @@ extract_duration <- function(tbl_name, tbl) {
 WDur_tibble <- map_df(names(resWDur), ~ extract_duration(.x, resWDur[[.x]]))
 
 ggplot() +
-  geom_histogram(aes(WDur_tibble$duration), binwidth = 10, color = "black", fill= "grey") +
+  geom_histogram(aes(WDur_tibble$duration), binwidth = 20, color = "black", fill= "grey") +
   labs(title = "gas name", x = "WD optimum",
        y = "Frequency")
