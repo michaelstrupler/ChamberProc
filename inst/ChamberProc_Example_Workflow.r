@@ -439,10 +439,10 @@ source("/Users/ms/Research Projects/Espana/UCO_Chamber/1_Test_newPackage_Chamber
 
 
 # Define parameters for the function
-start_tlag <- 80
-end_tlag <- 120
+start_tlag <- 60
+end_tlag <- 200
 interval_tlag <- 20
-start_duration <- 80
+start_duration <- 60
 end_duration <- 160
 interval_duration <- 20
 colConc <- "CO2_dry" #CH4
@@ -566,7 +566,7 @@ df<-filter(dsChunk,iChunk==selected_chunk)
 #
 resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
                                    fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh)
-                                   , maxSdFluxRel = 0.5 #this should be relative to the median (e.g. 10% von median)
+                                   , maxSdFluxRel = 1 #this should be relative to the median (e.g. 10% von median)
                                    , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),20)
 )
 resDur$duration
@@ -579,7 +579,7 @@ plot( sdFlux ~ duration, resDur$statAll[[1]] )
 resDur_H2O <- plotDurationUncertaintyRelSD( df, colConc = "H2Oppt", colTemp="AirTemp", volume = chamberVol,
                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
                                        )
-                                       , maxSdFluxRel = 0.5
+                                       , maxSdFluxRel = 1
                                        , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),30)
 )
 plot( flux ~ duration, resDur_H2O$statAll[[1]] )
@@ -589,7 +589,7 @@ plot( sdFlux ~ duration, resDur_H2O$statAll[[1]] )
 resDur_CH4 <- plotDurationUncertaintyRelSD( df, colConc = "CH4_dry", colTemp="AirTemp", volume = chamberVol,
                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
                                        )
-                                       , maxSdFluxRel = 0.5
+                                       , maxSdFluxRel = 1
                                        , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),30)
 )
 
@@ -646,7 +646,7 @@ resWDur <- list()
 for (v in unique(dsChunk$iChunk)){
   dfi <- dsChunk %>% dplyr::filter(iChunk==v)
 
-  WDur <- plotDurationUncertaintyRelSD( dfi, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
+  WDur <- plotDurationUncertaintyRelSD( dfi, colConc = "H2Oppt", colTemp="AirTemp", volume = chamberVol,
                                           fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp
                                           )
                                           , maxSdFluxRel = 1 #this should be relative to the median (e.g. 10% von median)
@@ -674,25 +674,57 @@ ggplot() +
        y = "Frequency")
 
 ggplot(WDur_tibble, aes(duration)) +
-  #geom_histogram(aes(y = ..density..), color = "#000000", fill = "#0099F8") +
+  geom_histogram(aes(y = ..density..), color = "#000000", fill = "#0099F8") +
   geom_density(color = "#000000", fill = "#F85700", alpha = 0.6)
 
 
-#With coloured quantiles
-# Calculate median, 5th and 95th quantiles
+# Plot With coloured quantiles
+# Compute median and quartiles
 median_val <- median(WDur_tibble$duration)
 quantile_25 <- quantile(WDur_tibble$duration, 0.25)
 quantile_75 <- quantile(WDur_tibble$duration, 0.75)
 
-# Create density plot
+# Total number of observations
+total_counts <- nrow(WDur_tibble)
+
+# Bin width
+binwidth <- 5
+
+# Maximum count for the histogram
+max_count <- max(hist(WDur_tibble$duration, plot = FALSE, breaks = seq(min(WDur_tibble$duration), max(WDur_tibble$duration), by = binwidth))$counts)
+
+# Create a dataframe for quantiles (used for legend)
+vline_data <- data.frame(
+  x = c(median_val, quantile_25, quantile_75),
+  label = c("Median", "1st Quartile", "3rd Quartile"),
+  color = c("red", "blue", "blue")
+)
+
+# Create the plot
 ggplot(WDur_tibble, aes(x = duration)) +
-  geom_density(fill = "skyblue", alpha = 0.5) +
-  geom_vline(xintercept = median_val, color = "red", linetype = "dashed", size = 1) +
-  geom_vline(xintercept = quantile_25, color = "blue", linetype = "dashed", size = 1) +
-  geom_vline(xintercept = quantile_75, color = "blue", linetype = "dashed", size = 1) +
-  labs(title = "Density Plot with Median and Quartiles",
-       x = "Duration",
-       y = "Density") +
-  theme_minimal()
-
-
+  theme_minimal() +
+  geom_histogram(aes(y = after_stat(density)), fill = "grey", color = NA, binwidth = binwidth) +
+  geom_density(fill = "lightblue", alpha = 0.5) +
+  geom_vline(data = vline_data, aes(xintercept = x, color = label), linetype = "dashed", size = 1) +
+  scale_color_manual(values = c("Median" = "red", "1st Quartile" = "blue", "3rd Quartile" = "blue")) +
+  scale_x_continuous(
+    breaks = seq(min(WDur_tibble$duration), max(WDur_tibble$duration), by = 20),
+    name = "Duration"
+  ) +
+  scale_y_continuous(
+    name = "Density",
+    sec.axis = sec_axis(~ . * total_counts * binwidth,
+                        name = "Counts",
+                        breaks = seq(0, max_count, by = 2))
+  ) +
+  labs(
+    title = "Histogram and density plot with median and quartiles",
+    subtitle = "H2O",
+    color = NULL,  # This removes the title from the legend
+    x = "Duration"
+  )+
+  theme(
+    legend.title = element_blank(),  # Ensure the legend title is blank
+    legend.position = c(1, 1),       # Position legend in the upper right
+    legend.justification = c(1, 1)   # Justify the legend to the upper right corner
+  )
