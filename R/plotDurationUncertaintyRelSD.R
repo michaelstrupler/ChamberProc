@@ -1,5 +1,23 @@
+#' plot the increase of uncertainty (Coefficient of variation) with decreasing measurement duration
+#'
+#' @param ds a data.frame
+#' @param colTime column name of time [s]
+#' @param fRegress the regression type
+#' @param ... further arguments to \code{\link{calcClosedChamberFlux}}
+#' @param durations a vector with the durations to test
+#' @param nDur number of durations to check
+#' @param maxSdFluxRel maximum allowed relative standard deviation (=sd flux/ median flux)
+#'
+#' @return A Tibble
+#' @export
+#'
+#' @examples resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
+#'fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh)
+#', maxSdFluxRel = 1
+#', durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),20)
+#')
+
 plotDurationUncertaintyRelSD <- function(
-    ### plot the increase of uncertainty with decreasing measurement duration
   ds
   , colTime = "TIMESTAMP"	##<< column name of time [s]
   , fRegress = c(exp = regressFluxExp, lin = regressFluxLinear, tanh = regressFluxTanh)	##<<
