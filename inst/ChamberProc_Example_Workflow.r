@@ -49,7 +49,7 @@ setwd("/Users/ms/Research Projects/Espana/UCO_Chamber/1_Test_newPackage_ChamberP
 latDeciDeg <- 37.91514875822371 #enter here latitude in Geographical Coordinates (decimal degrees); crs =4326)
 lonDeciDeg <- -4.72405536319233 #enter here longitude in Decimal Degrees
 
-fileName <- "JFAADS2174-20220523-110548-DataLog_User.dat"#JFAADS2174-20220531-080209-DataLog_User.dat" #set here file name
+fileName <- "JFAADS2174-20220531-080209-DataLog_User.dat" #"JFAADS2174-20220523-110548-DataLog_User.dat" #set here file name
 data_pathname <-"/Users/ms/Research Projects/Espana/UCO_Chamber/Data_Jesus/" #"data/" #"Data_Adrian/Agosto/19/"
 results_pathname <- ""
 
@@ -64,7 +64,7 @@ plan(multisession, workers = 4)
 
 # Read and prepare data ---------------------------------------------------
 
-ds0 <- fread(paste0(data_pathname,fileName), sep ="auto") #sample_PICARRO_data
+ds0 <-fread(paste0(data_pathname,fileName), sep ="auto") #sample_PICARRO_data
 
 #
 
@@ -72,8 +72,8 @@ ds0 <- fread(paste0(data_pathname,fileName), sep ="auto") #sample_PICARRO_data
 ds0$TIMESTAMP <- as.POSIXct(paste0(ds0$DATE," ",ds0$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
 ## The logger is accumulating data from previous field campaigns.
 #  Here we subset data from a given field campaign. (Entrar hora del inicio de observationes y fin (convert to UTC))
-ds_subset <- subset(ds0, as.numeric(TIMESTAMP) >= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-23 11:00:00")) )
-ds_subset <- subset(ds_subset, as.numeric(TIMESTAMP) <= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-23 14:50:00" )) )
+ds_subset <- subset(ds0, as.numeric(TIMESTAMP) >= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 08:00:01")) )
+ds_subset <- subset(ds_subset, as.numeric(TIMESTAMP) <= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 12:00:00" )) )
 
 #remove columns that are not needed for further calculations
 ds <- ds_subset %>% select(.,-c(DATE,TIME,FRAC_DAYS_SINCE_JAN1,FRAC_HRS_SINCE_JAN1,JULIAN_DAYS,EPOCH_TIME,ALARM_STATUS,INST_STATUS,CHAMBER_TEMP_sync,CHAMBER_PRESSURE_sync,SWITCH_sync,SOIL_TEMP_sync))
@@ -160,6 +160,7 @@ mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(coll
 
 chamberVol = 0.6*0.6*0.6		# chamber was a cube of 0.6m length
 surfaceArea = 0.6*0.6
+
 collar_spec <- tibble(
   collar = unique(dsChunk$collar),
   depth = 0, #pmax(0,rnorm(length(collar), mean = 0.03, sd = 0.015)),
@@ -193,7 +194,7 @@ p_NH3 <- chunk_plot(dsChunk, NH3_dry, labels_NH3)
 # Determine fits for selected chunks and compute the flux --------------------------------------
 
 ##select just one chunk
-selected_chunk=2
+selected_chunk=4
 df<-filter(dsChunk,iChunk==selected_chunk)
 
 
@@ -203,9 +204,9 @@ resFit <- calcClosedChamberFlux(df
                                 , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                 , colConc = "CO2_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
                                 , colTemp = "AirTemp", colPressure = "Pa"		#Temp in degC, Pressure in Pa
-                                , volume = 0.4*0.4*0.4, area = 0.4*0.4
+                                , volume = chamberVol, area = surfaceArea
                                 , minTLag = 60,  maxLag = 120
-                                , concSensitivity = 0.01
+                                , concSensitivity = 0.05
 )
 
 
@@ -214,9 +215,9 @@ resH2OFit <- calcClosedChamberFlux(df
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "H2Oppt", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = 0.4*0.4*0.4, area = 0.4*0.4
+                                   , volume = chamberVol, area = surfaceArea
                                    , minTLag = 120,  maxLag = 150,
-                                   , concSensitivity = 0.01
+                                   , concSensitivity = 0.05
 )
 
 
@@ -225,9 +226,9 @@ resCH4Fit <- calcClosedChamberFlux(df
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "CH4_dry", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = 0.4*0.4*0.4, area = 0.4*0.4
+                                   , volume = chamberVol, area = surfaceArea
                                    , minTLag = 50,  maxLag = 150
-                                   , concSensitivity = 0.01
+                                   , concSensitivity = 0.05
 )
 
 
@@ -236,9 +237,9 @@ resNH3Fit <- calcClosedChamberFlux(df
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "NH3_dry", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = 0.4*0.4*0.4, area = 0.4*0.4
+                                   , volume = chamberVol, area = surfaceArea
                                    , minTLag = 50,  maxLag = 120
-                                   , concSensitivity = 0.01
+                                   , concSensitivity = 0.05
 )
 
 
@@ -247,9 +248,9 @@ resN2OFit <- calcClosedChamberFlux(df
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "N2O_dry", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
-                                   , volume = 0.4*0.4*0.4, area = 0.4*0.4
+                                   , volume = chamberVol, area = surfaceArea
                                    , minTLag = 120,  maxLag = 180
-                                   , concSensitivity = 0.01
+                                   , concSensitivity = 0.05
 )
 
 ## plot the fits
@@ -270,10 +271,12 @@ plotResp(df, resN2OFit,colConc = "N2O_dry",ylab="N2O_dry (ppm)",xlab="time (Minu
 # -- and applying function calcClosedChamberFlux to each subset.
 
 collar_spec_CO2 <-mutate(collar_spec, tlag = 60) #One can save processing time and avoid failures in the non-robust breakpoint-detection by specifying a fixed lag-time (may differ across collars) with the collar specification.
-collar_spec_H2O <-mutate(collar_spec, tlag = 120)
+collar_spec_H2O <-mutate(collar_spec, tlag = 80)
 collar_spec_CH4 <-mutate(collar_spec, tlag = 60)
 collar_spec_NH3 <-mutate(collar_spec, tlag = 60)
-collar_spec_N2O <-mutate(collar_spec, tlag = 120)
+collar_spec_N2O <-mutate(collar_spec, tlag = 95)
+
+
 
 
 
@@ -369,7 +372,7 @@ res_CO2 <- calcClosedChamberFluxForChunkSpecs(
   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "CO2_dry", colTime = "TIMESTAMP"
-  , concSensitivity = 0.01
+  , concSensitivity = 0.05
 )
 
 res_NH3 <- calcClosedChamberFluxForChunkSpecs(
@@ -378,7 +381,7 @@ res_NH3 <- calcClosedChamberFluxForChunkSpecs(
   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "NH3_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
-  , concSensitivity = 0.01
+  , concSensitivity = 0.05
 )
 
 res_CH4 <- calcClosedChamberFluxForChunkSpecs(
@@ -387,7 +390,7 @@ res_CH4 <- calcClosedChamberFluxForChunkSpecs(
   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "CH4_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
-  , concSensitivity = 0.01
+  , concSensitivity = 0.05
 )
 
 res_N2O <- calcClosedChamberFluxForChunkSpecs(
@@ -396,7 +399,7 @@ res_N2O <- calcClosedChamberFluxForChunkSpecs(
   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "N2O_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
-  , concSensitivity = 0.01
+  , concSensitivity = 0.05
 )
 
 res_H2O <- calcClosedChamberFluxForChunkSpecs(
@@ -405,7 +408,7 @@ res_H2O <- calcClosedChamberFluxForChunkSpecs(
   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
   , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
   , colConc = "H2Oppt", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
-  , concSensitivity = 0.01
+  , concSensitivity = 0.05
 )
 
 
@@ -435,72 +438,72 @@ print( res_facets_H2O$plot[[1]])
 
 #Tests variation in lag time and duration for a single chunk
 ## Function to test optimal time windows and tlags
-source("/Users/ms/Research Projects/Espana/UCO_Chamber/1_Test_newPackage_ChamberProc/fluxDurationTests.R")
-
-
-# Define parameters for the function
-start_tlag <- 60
-end_tlag <- 200
-interval_tlag <- 20
-start_duration <- 60
-end_duration <- 160
-interval_duration <- 20
-colConc <- "CO2_dry" #CH4
-
-#for all chunks
-### create a list with tLags and WD_optimums for each chunk
-WD_O_list <-list()
-
-for (i in mapped_collars$iChunk) {
-
-  df<-filter(dsChunk,iChunk==5) #i
-resTwindowLag<- fluxDurationTest(df, start_tlag, end_tlag, interval_tlag, start_duration, end_duration, interval_duration, colConc)
-
-# Access the returned objects
-fluxTibble <- resTwindowLag$fluxTibble %>% mutate(CV=sdFlux/flux)
-fluxTibble_pivot <- resTwindowLag$fluxTibble_pivot
-summary_stats <- resTwindowLag$summary_stats
-
-fluxTibble_pivot
-summary_stats
-
-# Figure sdFlux vs Window Duration (WD)
-ggplot(data=fluxTibble, aes(x = duration, y = sdFlux, size = tLag)) +
-  geom_point(shape=1) +
-  labs(title = "Scatterplot of Duration vs sd Flux",
-       x = "Duration",
-       y = "sd Flux",
-       size = "Tlag") +
-  theme_minimal()
-
-# Figure sdFlux/flux = CV vs Window Duration (WD)
-ggplot(data=fluxTibble, aes(x = duration, y = CV, size = tLag)) +
-  geom_point(shape=1) +
-  labs(title = "Scatterplot of Duration vs sdFlux/flux (CV)",
-       x = "Duration",
-       y = "CV",
-       size = "Tlag") +
-  theme_minimal()
-
-## Figure with facet plots for each gas
-ggplot(data=fluxTibble, aes(x = duration, y = sdFlux)) +
-  geom_point() +
-  facet_wrap(~ tLag, scales = "fixed") +
-  labs(x = "WD", y = "sdFlux", title = "sd Flux vs WD for different tLags ")
-
-
-ggplot(data=fluxTibble, aes(x = duration, y = CV)) +
-  geom_point() +
-  facet_wrap(~ tLag, scales = "fixed") +
-  labs(x = "WD", y = "CV flux", title = "sd Flux / flux (=CV) vs WD for different tLags ")
+# source("/Users/ms/Research Projects/Espana/UCO_Chamber/1_Test_newPackage_ChamberProc/fluxDurationTests.R")
+#
+#
+# # Define parameters for the function
+# start_tlag <- 60
+# end_tlag <- 200
+# interval_tlag <- 20
+# start_duration <- 60
+# end_duration <- 160
+# interval_duration <- 20
+# colConc <- "CO2_dry" #CH4
+#
+# #for all chunks
+# ### create a list with tLags and WD_optimums for each chunk
+# WD_O_list <-list()
+#
+# for (i in mapped_collars$iChunk) {
+#
+#   df<-filter(dsChunk,iChunk==5) #i
+# resTwindowLag<- fluxDurationTest(df, start_tlag, end_tlag, interval_tlag, start_duration, end_duration, interval_duration, colConc)
+#
+# # Access the returned objects
+# fluxTibble <- resTwindowLag$fluxTibble %>% mutate(CV=sdFlux/flux)
+# fluxTibble_pivot <- resTwindowLag$fluxTibble_pivot
+# summary_stats <- resTwindowLag$summary_stats
+#
+# fluxTibble_pivot
+# summary_stats
+#
+# # Figure sdFlux vs Window Duration (WD)
+# ggplot(data=fluxTibble, aes(x = duration, y = sdFlux, size = tLag)) +
+#   geom_point(shape=1) +
+#   labs(title = "Scatterplot of Duration vs sd Flux",
+#        x = "Duration",
+#        y = "sd Flux",
+#        size = "Tlag") +
+#   theme_minimal()
+#
+# # Figure sdFlux/flux = CV vs Window Duration (WD)
+# ggplot(data=fluxTibble, aes(x = duration, y = CV, size = tLag)) +
+#   geom_point(shape=1) +
+#   labs(title = "Scatterplot of Duration vs sdFlux/flux (CV)",
+#        x = "Duration",
+#        y = "CV",
+#        size = "Tlag") +
+#   theme_minimal()
+#
+# ## Figure with facet plots for each gas
+# ggplot(data=fluxTibble, aes(x = duration, y = sdFlux)) +
+#   geom_point() +
+#   facet_wrap(~ tLag, scales = "fixed") +
+#   labs(x = "WD", y = "sdFlux", title = "sd Flux vs WD for different tLags ")
+#
+#
+# ggplot(data=fluxTibble, aes(x = duration, y = CV)) +
+#   geom_point() +
+#   facet_wrap(~ tLag, scales = "fixed") +
+#   labs(x = "WD", y = "CV flux", title = "sd Flux / flux (=CV) vs WD for different tLags ")
 
 # create a Figure with a distribution (or histogram) of optimal Window Durations for all measurements of a gas to identify range of optimal duration
 ## first define condition sd < X  or CV < X in order to define WDoptimum
 ### find for each tlag the WD that first meets the criterium CV <0.5
-WD_O <- fluxTibble  %>% group_by(tLag) %>% filter(abs(CV)<=0.5) %>% summarize(WD_optimum = min(duration, na.rm = TRUE))
-
-WD_O_list[[i]] <- WD_O
-}
+# WD_O <- fluxTibble  %>% group_by(tLag) %>% filter(abs(CV)<=0.5) %>% summarize(WD_optimum = min(duration, na.rm = TRUE))
+#
+# WD_O_list[[i]] <- WD_O
+# }
 
 
 
@@ -518,10 +521,12 @@ res_CO2 <- res_CO2 %>% mutate(gas = "CO2")
 res_CH4 <- res_CH4 %>% mutate(gas = "CH4")
 res_H2O <- res_H2O %>% mutate(gas = "H2O")
 res_N2O <- res_N2O %>% mutate(gas = "N2O")
+res_NH3 <- res_NH3 %>% mutate(gas = "NH3")
+
 
 
 # Combine the data frames
-combined_res <- bind_rows(res_CO2, res_CH4, res_H2O,res_N2O)
+combined_res <- bind_rows(res_CO2, res_CH4, res_H2O,res_N2O,res_NH3)
 combined_res <- combined_res %>% mutate(iFRegress = factor(iFRegress))
 
 # Plot the histograms of the used Models with facet wrap
@@ -530,7 +535,7 @@ ggplot(combined_res, aes(x = iFRegress, fill = gas)) +
   facet_wrap(~ gas, scales = "free_y") +
   scale_x_discrete(name = "Model") +
   scale_y_continuous(name = "Count", breaks = scales::pretty_breaks(n = 10)) +
-  labs(title = "Histograms of CO2, CH4, H2O, and N2O") +
+  labs(title = "Histograms of CO2, CH4, H2O, NH3,and N2O") +
   theme_minimal()+
   theme(legend.position = "none")
 
@@ -548,7 +553,7 @@ ggplot(combined_res, aes(x = iFRegress, fill = gas)) +
 # #Duration Uncertainty for selected chunk ----------------------------------------------------
 
 ##select just one chunk
-selected_chunk=2 #error when selected chunk==7: error in `gls()`:! false convergence (8) if exponential model or polynomial is used
+selected_chunk=4 #error when selected chunk==7: error in `gls()`:! false convergence (8) if exponential model or polynomial is used
 df<-filter(dsChunk,iChunk==selected_chunk)
 #
 resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
@@ -635,7 +640,7 @@ resWDur <- list()
 for (v in unique(dsChunk$iChunk)){
   dfi <- dsChunk %>% dplyr::filter(iChunk==v)
 
-  WDur <- plotDurationUncertaintyRelSD( dfi, colConc = "NH3_dry", colTemp="AirTemp", volume = chamberVol,
+  WDur <- plotDurationUncertaintyRelSD( dfi, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
                                           fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp
                                           )
                                           , maxSdFluxRel = 1 #this should be relative to the median (e.g. 10% von median)
@@ -708,7 +713,7 @@ ggplot(WDur_tibble, aes(x = duration)) +
   ) +
   labs(
     title = "Histogram and density plot with median and quartiles",
-    subtitle = "NH3",
+    subtitle = "CO2",
     color = NULL,  # This removes the title from the legend
     x = "Duration"
   )+
