@@ -529,6 +529,11 @@ res_NH3 <- res_NH3 %>% mutate(gas = "NH3")
 combined_res <- bind_rows(res_CO2, res_CH4, res_H2O,res_N2O,res_NH3)
 combined_res <- combined_res %>% mutate(iFRegress = factor(iFRegress))
 
+#save results as RDS
+saveRDS(combined_res %>% select(-c(times,model)),file=paste0(results_dir,"/results.rds"),compress = T)
+#save results as .csv
+write.csv(combined_res %>% select(-c(times,model)),file=paste0(results_dir,"/results.txt"))
+
 # Plot the histograms of the used Models with facet wrap
 ggplot(combined_res, aes(x = iFRegress, fill = gas)) +
   geom_bar(alpha = 0.7) +
