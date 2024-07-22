@@ -3,7 +3,7 @@
 ds <- readRDS(url("https://github.com/michaelstrupler/ChamberProc/blob/master/inst/genData/issue8_duration.rds?raw=TRUE"),"rb")
 
 dsChunk<- subsetContiguous(ds, colTime = "TIMESTAMP", colIndex = "collar",
-                                gapLength = 12, minNRec = 180, minTime = 180, indexNA = 13) %>% group_by(iChunk)
+                                gapLength = 12, minNRec = 180, minTime = 180, indexNA = 13)
 
 mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(collar)) %>%  head()
 

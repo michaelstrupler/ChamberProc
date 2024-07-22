@@ -49,8 +49,8 @@ setwd("/Users/ms/Research Projects/Espana/UCO_Chamber/1_Test_newPackage_ChamberP
 latDeciDeg <- 37.91514875822371 #enter here latitude in Geographical Coordinates (decimal degrees); crs =4326)
 lonDeciDeg <- -4.72405536319233 #enter here longitude in Decimal Degrees
 
-fileName <- "JFAADS2174-20220531-080209-DataLog_User.dat" #set here file name
-data_pathname <- "data/" #"Data_Adrian/Agosto/19/"
+fileName <- "JFAADS2174-20220523-110548-DataLog_User.dat"#JFAADS2174-20220531-080209-DataLog_User.dat" #set here file name
+data_pathname <-"/Users/ms/Research Projects/Espana/UCO_Chamber/Data_Jesus/" #"data/" #"Data_Adrian/Agosto/19/"
 results_pathname <- ""
 
 #create folder with the name of the measurement archive to save results and plots therein
@@ -64,16 +64,16 @@ plan(multisession, workers = 4)
 
 # Read and prepare data ---------------------------------------------------
 
-ds0 <- sample_PICARRO_data
+ds0 <- fread(paste0(data_pathname,fileName), sep ="auto") #sample_PICARRO_data
 
-#fread(paste0(data_pathname,fileName), sep ="auto")
+#
 
 
 ds0$TIMESTAMP <- as.POSIXct(paste0(ds0$DATE," ",ds0$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
 ## The logger is accumulating data from previous field campaigns.
 #  Here we subset data from a given field campaign. (Entrar hora del inicio de observationes y fin (convert to UTC))
-ds_subset <- subset(ds0, as.numeric(TIMESTAMP) >= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 08:00:00")) )
-ds_subset <- subset(ds_subset, as.numeric(TIMESTAMP) <= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 12:00:00" )) )
+ds_subset <- subset(ds0, as.numeric(TIMESTAMP) >= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-23 11:00:00")) )
+ds_subset <- subset(ds_subset, as.numeric(TIMESTAMP) <= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-23 14:50:00" )) )
 
 #remove columns that are not needed for further calculations
 ds <- ds_subset %>% select(.,-c(DATE,TIME,FRAC_DAYS_SINCE_JAN1,FRAC_HRS_SINCE_JAN1,JULIAN_DAYS,EPOCH_TIME,ALARM_STATUS,INST_STATUS,CHAMBER_TEMP_sync,CHAMBER_PRESSURE_sync,SWITCH_sync,SOIL_TEMP_sync))
@@ -193,13 +193,13 @@ p_NH3 <- chunk_plot(dsChunk, NH3_dry, labels_NH3)
 # Determine fits for selected chunks and compute the flux --------------------------------------
 
 ##select just one chunk
-selected_chunk=5
+selected_chunk=2
 df<-filter(dsChunk,iChunk==selected_chunk)
 
 
 
 resFit <- calcClosedChamberFlux(df
-                                , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+                                , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
                                 , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                 , colConc = "CO2_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
                                 , colTemp = "AirTemp", colPressure = "Pa"		#Temp in degC, Pressure in Pa
@@ -210,7 +210,7 @@ resFit <- calcClosedChamberFlux(df
 
 
 resH2OFit <- calcClosedChamberFlux(df
-                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "H2Oppt", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
@@ -221,7 +221,7 @@ resH2OFit <- calcClosedChamberFlux(df
 
 
 resCH4Fit <- calcClosedChamberFlux(df
-                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "CH4_dry", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
@@ -232,7 +232,7 @@ resCH4Fit <- calcClosedChamberFlux(df
 
 
 resNH3Fit <- calcClosedChamberFlux(df
-                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "NH3_dry", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
@@ -243,7 +243,7 @@ resNH3Fit <- calcClosedChamberFlux(df
 
 
 resN2OFit <- calcClosedChamberFlux(df
-                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
+                                   , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
                                    , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
                                    , colConc = "N2O_dry", colTime = "TIMESTAMP"
                                    , colTemp = "AirTemp", colPressure = "Pa"
@@ -546,22 +546,9 @@ ggplot(combined_res, aes(x = iFRegress, fill = gas)) +
 
 
 # #Duration Uncertainty for selected chunk ----------------------------------------------------
-# # Double chekc plotDurationUncertainty code
-#
-# a <- plotDurationUncertainty(df, colTime = "TIMESTAMP",colConc = "CO2_dry",colTemp="AirTemp", volume = chamberVol,
-#                              fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
-#                              ), maxSdFlux = 0.5 #this should be relative to the median (e.g. 10% von median)
-#                              , nDur=10
-#                              , durations = seq(collar_spec_CO2$tlag[1],max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),20)
-# )
-#
-#
-#
-#
-source("inst/plotDurationUncertaintyRelSD.R")
-#
+
 ##select just one chunk
-selected_chunk=8 #error when selected chunk==7: error in `gls()`:! false convergence (8) if exponential model or polynomial is used
+selected_chunk=2 #error when selected chunk==7: error in `gls()`:! false convergence (8) if exponential model or polynomial is used
 df<-filter(dsChunk,iChunk==selected_chunk)
 #
 resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
@@ -640,13 +627,15 @@ plot( sdFlux ~ duration, resDur_N2O$statAll[[1]] )
 
 
 
-# get WDoptimum for each chunk
+
+# get optimum measurement window duration for each chunk --------------------------------------------
+
 
 resWDur <- list()
 for (v in unique(dsChunk$iChunk)){
   dfi <- dsChunk %>% dplyr::filter(iChunk==v)
 
-  WDur <- plotDurationUncertaintyRelSD( dfi, colConc = "H2Oppt", colTemp="AirTemp", volume = chamberVol,
+  WDur <- plotDurationUncertaintyRelSD( dfi, colConc = "NH3_dry", colTemp="AirTemp", volume = chamberVol,
                                           fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp
                                           )
                                           , maxSdFluxRel = 1 #this should be relative to the median (e.g. 10% von median)
@@ -658,7 +647,7 @@ for (v in unique(dsChunk$iChunk)){
 
 
 ## extract the chunk name and duration from the list:
-# Create a function to extract duration and list name
+# function to extract duration and list name
 extract_duration <- function(tbl_name, tbl) {
   duration <- tbl$duration
   list_name <- as.integer(tbl_name)
@@ -668,14 +657,14 @@ extract_duration <- function(tbl_name, tbl) {
 # Iterate over each tibble in `resWDur`, extracting duration and list name
 WDur_tibble <- map_df(names(resWDur), ~ extract_duration(.x, resWDur[[.x]]))
 
-ggplot() +
-  geom_histogram(aes(WDur_tibble$duration), binwidth = 20, color = "black", fill= "grey") +
-  labs(title = "gas name", x = "WD optimum",
-       y = "Frequency")
-
-ggplot(WDur_tibble, aes(duration)) +
-  geom_histogram(aes(y = ..density..), color = "#000000", fill = "#0099F8") +
-  geom_density(color = "#000000", fill = "#F85700", alpha = 0.6)
+# ggplot() +
+#   geom_histogram(aes(WDur_tibble$duration), binwidth = 20, color = "black", fill= "grey") +
+#   labs(title = "gas name", x = "WD optimum",
+#        y = "Frequency")
+#
+# ggplot(WDur_tibble, aes(duration)) +
+#   geom_histogram(aes(y = ..density..), color = "#000000", fill = "#0099F8") +
+#   geom_density(color = "#000000", fill = "#F85700", alpha = 0.6)
 
 
 # Plot With coloured quantiles
@@ -688,7 +677,7 @@ quantile_75 <- quantile(WDur_tibble$duration, 0.75)
 total_counts <- nrow(WDur_tibble)
 
 # Bin width
-binwidth <- 5
+binwidth <- 2
 
 # Maximum count for the histogram
 max_count <- max(hist(WDur_tibble$duration, plot = FALSE, breaks = seq(min(WDur_tibble$duration), max(WDur_tibble$duration), by = binwidth))$counts)
@@ -719,12 +708,12 @@ ggplot(WDur_tibble, aes(x = duration)) +
   ) +
   labs(
     title = "Histogram and density plot with median and quartiles",
-    subtitle = "H2O",
+    subtitle = "NH3",
     color = NULL,  # This removes the title from the legend
     x = "Duration"
   )+
   theme(
     legend.title = element_blank(),  # Ensure the legend title is blank
-    legend.position = c(1, 1),       # Position legend in the upper right
+    legend.position.inside = c(1, 1),       # Position legend in the upper right
     legend.justification = c(1, 1)   # Justify the legend to the upper right corner
   )
