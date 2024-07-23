@@ -19,6 +19,7 @@
 
 plotDurationUncertaintyRelSD <- function(
   ds
+  , plot = FALSE  ##<< show plot (TRUE/FALSE)
   , colTime = "TIMESTAMP"	##<< column name of time [s]
   , fRegress = c(exp = regressFluxExp, lin = regressFluxLinear, tanh = regressFluxTanh)	##<<
   ## list of functions to yield
@@ -28,7 +29,6 @@ plotDurationUncertaintyRelSD <- function(
   ## durations to check. Default is equally spaced between tLag and maximum duration
   , nDur = 5		    ##<< number of durations to check
   , maxSdFluxRel = 0.5	  ##<< maximum allowed Ratio of standard deviation of flux to flux
-  , plot = FALSE  ##<< show plot (TRUE/FALSE)
 ){
   times <- ds[[colTime]]
   times0 <- as.numeric(times) - as.numeric(times[1])
