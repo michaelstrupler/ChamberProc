@@ -49,8 +49,17 @@ setwd("/Users/ms/Research Projects/Espana/UCO_Chamber/1_Test_newPackage_ChamberP
 latDeciDeg_site1 <- 37.91514875822371 #enter here latitude in Geographical Coordinates (decimal degrees); crs =4326)
 lonDeciDeg_site1 <- -4.72405536319233 #enter here longitude in Decimal Degrees
 
+latDeciDeg_site2 <- 37.913511
+lonDeciDeg_site2 <- -4.721578
+
+
 fileName <- "JFAADS2174-20220531-080209-DataLog_User.dat" #"JFAADS2174-20220523-110548-DataLog_User.dat" #set here file name
 fileName2 <- "JFAADS2174-20220524-074601-DataLog_User.dat"
+fileName3 <- "JFAADS2174-20220601-102835-DataLog_User.dat"
+fileName4 <-"JFAADS2174-20221026-092651-DataLog_User.dat"
+fileName5 <-"JFAADS2174-20221027-091855-DataLog_User.dat"
+
+
 data_pathname <-"/Users/ms/Research Projects/Espana/UCO_Chamber/Data_Jesus/" #"data/" #"Data_Adrian/Agosto/19/"
 data_pathname2 <- "/Users/ms/Research Projects/Espana/UCO_Chamber/Data_Adrian/"
 results_pathname <- ""
@@ -58,7 +67,7 @@ results_pathname <- ""
 #create folder with the name of the measurement archive to save results and plots therein
 dir.create(paste0(results_pathname,"results"))
 
-results_dir <- paste0(results_pathname,"results/publication24"))
+results_dir <- paste0(results_pathname,"results/publication24")
 dir.create(results_dir)
 # fit chambers in parallel inside calcClosedChamberFluxForChunkSpecs
 plan(multisession, workers = 4)
@@ -66,32 +75,51 @@ plan(multisession, workers = 4)
 
 # Read and prepare data ---------------------------------------------------
 # read and combine measurement data from multiple datasets
-
+## data Jesus
 ds0 <-fread(paste0(data_pathname,fileName), sep ="auto") #sample_PICARRO_data
 ds1 <-fread(paste0(data_pathname,fileName2), sep ="auto")
-#ds2 <-fread(paste0(data_pathname,fileName3), sep ="auto")
+ds2 <-fread(paste0(data_pathname,fileName3), sep ="auto")
+ds3 <-fread(paste0(data_pathname,fileName4), sep ="auto")
+ds4 <-fread(paste0(data_pathname,fileName5), sep ="auto")
+
+
+#data Adrian
+
 
 
 #create a timestamp for each dataset
 ds0$TIMESTAMP <- as.POSIXct(paste0(ds0$DATE," ",ds0$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
 ds1$TIMESTAMP <- as.POSIXct(paste0(ds1$DATE," ",ds1$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
-#ds2$TIMESTAMP <- as.POSIXct(paste0(ds2$DATE," ",ds2$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
+ds2$TIMESTAMP <- as.POSIXct(paste0(ds2$DATE," ",ds2$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
+ds3$TIMESTAMP <- as.POSIXct(paste0(ds3$DATE," ",ds3$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
+ds4$TIMESTAMP <- as.POSIXct(paste0(ds4$DATE," ",ds4$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
 
 
 #subset datasets
 ds0_subset <- ds0 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 08:00:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 12:00:00" ))))
 ds1_subset <- ds1 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-24 08:00:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-24 12:00:00" ))))
+ds2_subset <- ds2 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-06-01 10:46:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-06-01 12:45:00" ))))
+ds3_subset <- ds3 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-10-26 09:41:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-10-26 13:34:00" ))))
+ds4_subset <- ds4 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-10-27 09:32:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-10-27 13:26:00" ))))
+
 
 # Correct gases -----------------------------------------------------------
 ## all this is done for each dataset subset with the function "process_dataset" (correction for gases and add additional environmental variables)
 source("inst/process_dataset.R")
 
-ds0_processed <- process_dataset(ds0_subset,latDeciDeg,lonDeciDeg)
-ds1_processed <- process_dataset(ds1_subset,latDeciDeg,lonDeciDeg)
+ds0_processed <- process_dataset(ds0_subset,latDeciDeg_site1,lonDeciDeg_site1)
+ds1_processed <- process_dataset(ds1_subset,latDeciDeg_site1,lonDeciDeg_site1)
+ds2_processed <- process_dataset(ds2_subset,latDeciDeg_site1,lonDeciDeg_site1)
+ds3_processed <- process_dataset(ds3_subset,latDeciDeg_site1,lonDeciDeg_site1)
+ds4_processed <- process_dataset(ds4_subset,latDeciDeg_site1,lonDeciDeg_site1)
 
 #merge the loaded datasets and remove columns that are not needed for further calculations
-ds_merged_location1 <-rbind(ds0_processed,ds1_processed)
-ds <- ds_merged_location1
+ds_merged <-rbind(ds0_processed,ds1_processed,ds2_processed)
+ds <- ds_merged
+
+#save ds_merged
+saveRDS(ds_merged,paste0(results_dir,"/ds_merged.Rds"))
+
 #ds_merged_location2 <-rbind(ds0,ds1)
 
 
@@ -135,14 +163,14 @@ mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(coll
 ## DataFrame collar_spec then needs to specify for each collar id in column collar,
 # the colums area (m2) and volume (m3), as well a tlag (s), the lag time between start of the cycle , i.e. the start of the chunk (usually chamber closing time), and the time when the gas reaches the sensor.
 
-chamberVol = 0.6*0.6*0.6		# chamber was a cube of 0.6m length
-surfaceArea = 0.6*0.6
+chamberVol_site1 = 0.475*0.475*0.794		# data jesus
+surfaceArea_site1 = 0.475*0.475
 
 collar_spec <- tibble(
   collar = unique(dsChunk$collar),
   depth = 0, #pmax(0,rnorm(length(collar), mean = 0.03, sd = 0.015)),
-  area = surfaceArea,
-  volume = chamberVol + surfaceArea * depth,
+  area = surfaceArea_site1,
+  volume = chamberVol_site1 + surfaceArea_site1 * depth,
   tlag = NA)
 head(collar_spec)
 
@@ -616,77 +644,41 @@ plot( sdFlux ~ duration, resDur_N2O$statAll[[1]] )
 
 
 # get optimum measurement window duration for each chunk --------------------------------------------
-plotDurationUncertaintyRelSD <- function(
-    ds
-    , colTime = "TIMESTAMP"	##<< column name of time [s]
-    , fRegress = c(exp = regressFluxExp, lin = regressFluxLinear, tanh = regressFluxTanh)	##<<
-    ## list of functions to yield
-    ## a single flux estimate, see details of \code{\link{calcClosedChamberFlux}}
-    , ...	            ##<< further arguments to \code{\link{calcClosedChamberFlux}}
-    , durations = seq( max(65,resFit0$tLag), max(times0), length.out = nDur + 1)		##<<
-    ## durations to check. Default is equally spaced between tLag and maximum duration
-    , nDur = 5		    ##<< number of durations to check
-    , maxSdFluxRel = 0.5	  ##<< maximum allowed Ratio of standard deviation of flux to flux
-    , plot = FALSE  ##<< show plot (TRUE/FALSE)
-){
-  times <- ds[[colTime]]
-  times0 <- as.numeric(times) - as.numeric(times[1])
-  resFit0 <- calcClosedChamberFlux(ds, colTime = colTime, fRegress = fRegress, ...)
-  #resFit0
-  duration <- durations[1]
-  nDur <- length(durations)
-  #plot( CO2_dry ~ times0, ds)
-  resFits0 <- suppressWarnings(
-    bind_rows(map_df( durations[-c(nDur + 1) ], function(duration){
-      dss <- subset(ds, times0 <= duration )
-      times0s <- times0[times0 <= duration]
-      resFit <- calcClosedChamberFlux(dss, useFixedTLag = resFit0$tLag
-                                      ,colTime = colTime, fRegress = fRegress[resFit0$iFRegress],...)
-      #plot( CO2_dry ~ times0s, dss)
-      #lines( fitted(resFit$model) ~ times0s[times0s >= resFit0$tLag], col = "red")
-      #bind_cols(select_(resFit,~flux,~sdFlux), duration = max(times0s) )
-      #select_(resFit,~flux,~sdFlux)
-    })))
-  resFits <- suppressWarnings(bind_rows(resFits0, resFit0)
-                              %>% mutate(duration = c(durations,max(times0))))
-  iMinTime <- if (min(abs(resFits$sdFlux/resFits$fluxMedian), na.rm = TRUE) <= maxSdFluxRel ) {
-    min(which( abs(resFits$sdFlux/resFits$fluxMedian) <= maxSdFluxRel ))
-  } else nrow(resFits)
-  minDuration <- resFits[iMinTime,]
-  ##details<<
-  ## Produces a plot with standard deviation of the flux estimate versus
-  ## the duration of the measurment.
-  ## The lines correspond to the given maxium acceptable standard deviation to flux ratio
-  ## and the duration that matches this criterion.
-  if (plot==TRUE) {
-    plot( abs(sdFlux/fluxMedian) ~ duration, resFits, xlab = "Duration of measurement (s)"
-          , ylab = "abs(sdflux/fluxMedian)")
-    abline(h = maxSdFluxRel, col = "grey", lty = "dashed" )
-    abline(v = minDuration["duration"], col = "grey", lty = "dashed" )
-  }
-  ##value<< tibble result of \code{\link{calcClosedChamberFlux}} for
-  ## the minimum duration, with additional component
-  ans <- mutate( resFits[iMinTime,]
-                 , statAll = list(resFits)	##<< tibble: each row a fit for a given duration
-  )
-  ans
-}
 
+# resWDur <- list()
+# for (v in unique(dsChunk$iChunk)){
+#   dfi <- dsChunk %>% dplyr::filter(iChunk==v)
+#
+#   WDur <- plotDurationUncertaintyRelSD( dfi, plot=FALSE, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
+#                                           fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp
+#                                           )
+#                                           , maxSdFluxRel = 1 #this should be relative to the median (e.g. 10% von median)
+#                                           , durations = seq(60,max(as.numeric(dfi$TIMESTAMP) - as.numeric(dfi$TIMESTAMP[1])),20)
+#   )
+#
+#   resWDur[[v]] <- WDur
+# }
 
+#replacement of for-loop abvove:
+unique_chunks <- unique(dsChunk$iChunk)
 
-resWDur <- list()
-for (v in unique(dsChunk$iChunk)){
-  dfi <- dsChunk %>% dplyr::filter(iChunk==v)
+resWDur <- unique_chunks %>%
+  map(function(v) {
+    dfi <- dsChunk %>% filter(iChunk == v)
 
-  WDur <- plotDurationUncertaintyRelSD( dfi, plot=FALSE, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
-                                          fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp
-                                          )
-                                          , maxSdFluxRel = 1 #this should be relative to the median (e.g. 10% von median)
-                                          , durations = seq(60,max(as.numeric(dfi$TIMESTAMP) - as.numeric(dfi$TIMESTAMP[1])),20)
-  )
+    plotDurationUncertaintyRelSD(
+      dfi, plot = TRUE, colConc = "CO2_dry", colTemp = "AirTemp", volume = chamberVol,
+      fRegress = list(
+        lin = regressFluxLinear,
+        tanh = regressFluxTanh,
+        exp = regressFluxExp
+      ),
+      maxSdFluxRel = 1,
+      durations = seq(60, max(as.numeric(dfi$TIMESTAMP) - as.numeric(dfi$TIMESTAMP[1])), 20)
+    )
+  }) %>%
+  set_names(unique_chunks)
 
-  resWDur[[v]] <- WDur
-}
 
 
 ## extract the chunk name and duration from the list:
