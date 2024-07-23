@@ -11,7 +11,8 @@ plotDurationUncertaintyRelSD(
   ...,
   durations = seq(max(65, resFit0$tLag), max(times0), length.out = nDur + 1),
   nDur = 5,
-  maxSdFluxRel = 0.5
+  maxSdFluxRel = 0.5,
+  plot = FALSE
 )
 }
 \arguments{

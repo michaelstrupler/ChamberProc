@@ -18,17 +18,17 @@
 #')
 
 plotDurationUncertaintyRelSD <- function(
-  ds
-  , plot = FALSE  ##<< show plot (TRUE/FALSE)
-  , colTime = "TIMESTAMP"	##<< column name of time [s]
-  , fRegress = c(exp = regressFluxExp, lin = regressFluxLinear, tanh = regressFluxTanh)	##<<
-  ## list of functions to yield
-  ## a single flux estimate, see details of \code{\link{calcClosedChamberFlux}}
-  , ...	            ##<< further arguments to \code{\link{calcClosedChamberFlux}}
-  , durations = seq( max(65,resFit0$tLag), max(times0), length.out = nDur + 1)		##<<
-  ## durations to check. Default is equally spaced between tLag and maximum duration
-  , nDur = 5		    ##<< number of durations to check
-  , maxSdFluxRel = 0.5	  ##<< maximum allowed Ratio of standard deviation of flux to flux
+    ds
+    , colTime = "TIMESTAMP"	##<< column name of time [s]
+    , fRegress = c(exp = regressFluxExp, lin = regressFluxLinear, tanh = regressFluxTanh)	##<<
+    ## list of functions to yield
+    ## a single flux estimate, see details of \code{\link{calcClosedChamberFlux}}
+    , ...	            ##<< further arguments to \code{\link{calcClosedChamberFlux}}
+    , durations = seq( max(65,resFit0$tLag), max(times0), length.out = nDur + 1)		##<<
+    ## durations to check. Default is equally spaced between tLag and maximum duration
+    , nDur = 5		    ##<< number of durations to check
+    , maxSdFluxRel = 0.5	  ##<< maximum allowed Ratio of standard deviation of flux to flux
+    , plot = FALSE  ##<< show plot (TRUE/FALSE)
 ){
   times <- ds[[colTime]]
   times0 <- as.numeric(times) - as.numeric(times[1])
@@ -59,11 +59,11 @@ plotDurationUncertaintyRelSD <- function(
   ## the duration of the measurment.
   ## The lines correspond to the given maxium acceptable standard deviation to flux ratio
   ## and the duration that matches this criterion.
-  if (plot) {
-  plot( abs(sdFlux/fluxMedian) ~ duration, resFits, xlab = "Duration of measurement (s)"
-        , ylab = "abs(sdflux/fluxMedian)")
-  abline(h = maxSdFluxRel, col = "grey", lty = "dashed" )
-  abline(v = minDuration["duration"], col = "grey", lty = "dashed" )
+  if (plot==TRUE) {
+    plot( abs(sdFlux/fluxMedian) ~ duration, resFits, xlab = "Duration of measurement (s)"
+          , ylab = "abs(sdflux/fluxMedian)")
+    abline(h = maxSdFluxRel, col = "grey", lty = "dashed" )
+    abline(v = minDuration["duration"], col = "grey", lty = "dashed" )
   }
   ##value<< tibble result of \code{\link{calcClosedChamberFlux}} for
   ## the minimum duration, with additional component
