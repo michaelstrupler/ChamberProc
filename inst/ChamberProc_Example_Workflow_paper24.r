@@ -679,6 +679,8 @@ resWDur <- unique_chunks %>%
   }) %>%
   set_names(unique_chunks)
 
+#save results as RDS
+saveRDS(resWDur,file=paste0(results_dir,"/results_WDur.rds"),compress = T)
 
 
 ## extract the chunk name and duration from the list:
@@ -729,7 +731,7 @@ ggplot(WDur_tibble, aes(x = duration)) +
   theme_minimal() +
   geom_histogram(aes(y = after_stat(density)), fill = "grey", color = NA, binwidth = binwidth) +
   geom_density(fill = "lightblue", alpha = 0.5) +
-  geom_vline(data = vline_data, aes(xintercept = x, color = label), linetype = "dashed", size = 1) +
+  geom_vline(data = vline_data, aes(xintercept = x, color = label), linetype = "dashed", linewidth = 1) +
   scale_color_manual(values = c("Median" = "red", "1st Quartile" = "blue", "3rd Quartile" = "blue")) +
   scale_x_continuous(
     breaks = seq(min(WDur_tibble$duration), max(WDur_tibble$duration), by = 20),
