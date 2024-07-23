@@ -28,6 +28,7 @@ plotDurationUncertaintyRelSD <- function(
   ## durations to check. Default is equally spaced between tLag and maximum duration
   , nDur = 5		    ##<< number of durations to check
   , maxSdFluxRel = 0.5	  ##<< maximum allowed Ratio of standard deviation of flux to flux
+  , plot = FALSE  ##<< show plot (TRUE/FALSE)
 ){
   times <- ds[[colTime]]
   times0 <- as.numeric(times) - as.numeric(times[1])
@@ -58,10 +59,12 @@ plotDurationUncertaintyRelSD <- function(
   ## the duration of the measurment.
   ## The lines correspond to the given maxium acceptable standard deviation to flux ratio
   ## and the duration that matches this criterion.
+  if (plot) {
   plot( abs(sdFlux/fluxMedian) ~ duration, resFits, xlab = "Duration of measurement (s)"
         , ylab = "abs(sdflux/fluxMedian)")
   abline(h = maxSdFluxRel, col = "grey", lty = "dashed" )
   abline(v = minDuration["duration"], col = "grey", lty = "dashed" )
+  }
   ##value<< tibble result of \code{\link{calcClosedChamberFlux}} for
   ## the minimum duration, with additional component
   ans <- mutate( resFits[iMinTime,]
