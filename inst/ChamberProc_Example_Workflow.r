@@ -49,8 +49,8 @@ setwd("/Users/ms/Research Projects/Espana/UCO_Chamber/1_Test_newPackage_ChamberP
 latDeciDeg <- 37.91514875822371 #enter here latitude in Geographical Coordinates (decimal degrees); crs =4326)
 lonDeciDeg <- -4.72405536319233 #enter here longitude in Decimal Degrees
 
-fileName <- "JFAADS2174-20220531-080209-DataLog_User.dat" #"JFAADS2174-20220523-110548-DataLog_User.dat" #set here file name
-data_pathname <-"/Users/ms/Research Projects/Espana/UCO_Chamber/Data_Jesus/" #"data/" #"Data_Adrian/Agosto/19/"
+fileName <- "JFAADS2174-20230820-000011-DataLog_User.dat" #"JFAADS2174-20220523-110548-DataLog_User.dat" #set here file name
+data_pathname <-"/Users/ms/Research Projects/Espana/UCO_Chamber/Data_Adrian/Agosto/19/" #"data/" #"Data_Adrian/Agosto/19/"
 results_pathname <- ""
 
 #create folder with the name of the measurement archive to save results and plots therein
@@ -64,7 +64,7 @@ plan(multisession, workers = 4)
 
 # Read and prepare data ---------------------------------------------------
 
-ds0 <-fread(paste0(data_pathname,fileName), sep ="auto") #sample_PICARRO_data
+ds0 <-fread(file=paste0(data_pathname,fileName), sep ="auto") #sample_PICARRO_data
 
 #
 
@@ -72,8 +72,8 @@ ds0 <-fread(paste0(data_pathname,fileName), sep ="auto") #sample_PICARRO_data
 ds0$TIMESTAMP <- as.POSIXct(paste0(ds0$DATE," ",ds0$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
 ## The logger is accumulating data from previous field campaigns.
 #  Here we subset data from a given field campaign. (Entrar hora del inicio de observationes y fin (convert to UTC))
-ds_subset <- subset(ds0, as.numeric(TIMESTAMP) >= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 08:00:01")) )
-ds_subset <- subset(ds_subset, as.numeric(TIMESTAMP) <= as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 12:00:00" )) )
+ds_subset <- subset(ds0, as.numeric(TIMESTAMP) >= as.numeric(RespChamberProc::as.POSIXctUTC("2023-08-20 00:00:01")) )
+ds_subset <- subset(ds_subset, as.numeric(TIMESTAMP) <= as.numeric(RespChamberProc::as.POSIXctUTC("2023-08-20 12:00:00" )) )
 
 #remove columns that are not needed for further calculations
 ds <- ds_subset %>% select(.,-c(DATE,TIME,FRAC_DAYS_SINCE_JAN1,FRAC_HRS_SINCE_JAN1,JULIAN_DAYS,EPOCH_TIME,ALARM_STATUS,INST_STATUS,CHAMBER_TEMP_sync,CHAMBER_PRESSURE_sync,SWITCH_sync,SOIL_TEMP_sync))

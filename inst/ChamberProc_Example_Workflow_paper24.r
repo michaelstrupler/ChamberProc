@@ -52,16 +52,18 @@ lonDeciDeg_site1 <- -4.72405536319233 #enter here longitude in Decimal Degrees
 latDeciDeg_site2 <- 37.913511
 lonDeciDeg_site2 <- -4.721578
 
+#Data Jesus
+fileName <- "JFAADS2174-20220524-074601-DataLog_User.dat" #"JFAADS2174-20220523-110548-DataLog_User.dat" #set here file name
+fileName2 <- "JFAADS2174-20220601-102835-DataLog_User.dat"
+fileName3 <-  "JFAADS2174-20221129-091921-DataLog_User.dat"#"JFAADS2174-20220601-102835-DataLog_User.dat"
+fileName4 <-"JFAADS2174-20221130-091721-DataLog_User.dat"
+#fileName5 <-
 
-fileName <- "JFAADS2174-20220531-080209-DataLog_User.dat" #"JFAADS2174-20220523-110548-DataLog_User.dat" #set here file name
-fileName2 <- "JFAADS2174-20220524-074601-DataLog_User.dat"
-fileName3 <- "JFAADS2174-20220601-102835-DataLog_User.dat"
-fileName4 <-"JFAADS2174-20221026-092651-DataLog_User.dat"
-fileName5 <-"JFAADS2174-20221027-091855-DataLog_User.dat"
-
+#Data Adrian
+#fileName5 <-"JFAADS2174-20230820-000011-DataLog_User.dat"
 
 data_pathname <-"/Users/ms/Research Projects/Espana/UCO_Chamber/Data_Jesus/" #"data/" #"Data_Adrian/Agosto/19/"
-data_pathname2 <- "/Users/ms/Research Projects/Espana/UCO_Chamber/Data_Adrian/"
+data_pathname2 <- "/Users/ms/Research Projects/Espana/UCO_Chamber/Data_Adrian/Agosto/19/"
 results_pathname <- ""
 
 #create folder with the name of the measurement archive to save results and plots therein
@@ -69,8 +71,9 @@ dir.create(paste0(results_pathname,"results"))
 
 results_dir <- paste0(results_pathname,"results/publication24")
 dir.create(results_dir)
+
 # fit chambers in parallel inside calcClosedChamberFluxForChunkSpecs
-plan(multisession, workers = 4)
+#plan(multisession, workers = 4)
 
 
 # Read and prepare data ---------------------------------------------------
@@ -80,7 +83,7 @@ ds0 <-fread(paste0(data_pathname,fileName), sep ="auto") #sample_PICARRO_data
 ds1 <-fread(paste0(data_pathname,fileName2), sep ="auto")
 ds2 <-fread(paste0(data_pathname,fileName3), sep ="auto")
 ds3 <-fread(paste0(data_pathname,fileName4), sep ="auto")
-ds4 <-fread(paste0(data_pathname,fileName5), sep ="auto")
+#s4 <-fread(paste0(data_pathname2,fileName5), sep ="auto")
 
 
 #data Adrian
@@ -92,15 +95,15 @@ ds0$TIMESTAMP <- as.POSIXct(paste0(ds0$DATE," ",ds0$TIME), "%Y-%m-%d %H:%M:%S", 
 ds1$TIMESTAMP <- as.POSIXct(paste0(ds1$DATE," ",ds1$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
 ds2$TIMESTAMP <- as.POSIXct(paste0(ds2$DATE," ",ds2$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
 ds3$TIMESTAMP <- as.POSIXct(paste0(ds3$DATE," ",ds3$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
-ds4$TIMESTAMP <- as.POSIXct(paste0(ds4$DATE," ",ds4$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
+#ds4$TIMESTAMP <- as.POSIXct(paste0(ds4$DATE," ",ds4$TIME), "%Y-%m-%d %H:%M:%S", tz= "UTC")
 
 
 #subset datasets
-ds0_subset <- ds0 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 08:00:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-31 12:00:00" ))))
-ds1_subset <- ds1 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-24 08:00:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-24 12:00:00" ))))
-ds2_subset <- ds2 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-06-01 10:46:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-06-01 12:45:00" ))))
-ds3_subset <- ds3 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-10-26 09:41:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-10-26 13:34:00" ))))
-ds4_subset <- ds4 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-10-27 09:32:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-10-27 13:26:00" ))))
+ds0_subset <- ds0 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-24 08:00:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-05-24 12:00:00" ))))
+ds1_subset <- ds1 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-06-01 10:46:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-06-01 12:45:00" ))))
+ds2_subset <- ds2 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-11-29 09:46:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-11-29 13:40:00" ))))
+ds3_subset <- ds3 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2022-11-30 09:36:00")), as.numeric(RespChamberProc::as.POSIXctUTC("2022-11-30 13:30:00" ))))
+#ds4_subset <- ds4 %>% filter(between(as.numeric(TIMESTAMP),as.numeric(RespChamberProc::as.POSIXctUTC("2023-08-20 00:00:01")), as.numeric(RespChamberProc::as.POSIXctUTC("2023-08-20 12:00:00" ))))
 
 
 # Correct gases -----------------------------------------------------------
@@ -111,10 +114,10 @@ ds0_processed <- process_dataset(ds0_subset,latDeciDeg_site1,lonDeciDeg_site1)
 ds1_processed <- process_dataset(ds1_subset,latDeciDeg_site1,lonDeciDeg_site1)
 ds2_processed <- process_dataset(ds2_subset,latDeciDeg_site1,lonDeciDeg_site1)
 ds3_processed <- process_dataset(ds3_subset,latDeciDeg_site1,lonDeciDeg_site1)
-ds4_processed <- process_dataset(ds4_subset,latDeciDeg_site1,lonDeciDeg_site1)
+#ds4_processed <- process_dataset(ds4_subset,latDeciDeg_site2,lonDeciDeg_site2)
 
 #merge the loaded datasets and remove columns that are not needed for further calculations
-ds_merged <-rbind(ds0_processed,ds1_processed,ds2_processed)
+ds_merged <-rbind(ds0_processed,ds1_processed,ds2_processed,ds3_processed) #ds2_processed,ds3_processed
 ds <- ds_merged
 
 #save ds_merged
@@ -123,22 +126,23 @@ saveRDS(ds_merged,paste0(results_dir,"/ds_merged.Rds"))
 #ds_merged_location2 <-rbind(ds0,ds1)
 
 
+ds <- readRDS(paste0(results_dir,"/ds_merged.Rds"))
 
 
 ## get an overview of the data (for the whole subset)
-p_collar <- plot(ds$TIMESTAMP,ds$collar, pch = ".", ylab = "collar (Chamber)",xlab = "Time")
+p_collar <- plot(ds3_processed$TIMESTAMP,ds3_processed$collar, pch = ".", ylab = "collar (Chamber)",xlab = "Time")
 p_collar
 
-### facet plot of time series (for selected subset; select the ds here)
-ds_gas_long <- gather(ds0_processed, key="gas", value="value", c("CO2_dry","H2Oppt","CH4_dry","NH3_dry","N2O_dry"))
+### facet plot of time series (for selected subset; enter the ds of interest here)
+ds_gas_long <- gather(ds3_processed, key="gas", value="value", c("CO2_dry","H2Oppt","CH4_dry","NH3_dry","N2O_dry"))
 p_gas_facet <- ggplot(ds_gas_long, aes(x=TIMESTAMP, y=value))+
-  ggtitle(format(ds$TIMESTAMP,"%d/%m/%Y")[1])+
+  ggtitle(format(ds3_processed$TIMESTAMP,"%d/%m/%Y")[1])+
   geom_point(pch = ".")+
   facet_wrap(~factor(gas,levels=c("CO2_dry","H2Oppt","CH4_dry","NH3_dry","N2O_dry")),ncol=1,scales = "free")
 
-ds_envar_long <- gather(ds0_processed, key="envar", value="value", c("AirTemp","Pa","rel_humidity","shortwave_radiation","ET0"))
+ds_envar_long <- gather(ds3_processed, key="envar", value="value", c("AirTemp","Pa","rel_humidity","shortwave_radiation","ET0"))
 p_envar_facet <-  ggplot(ds_envar_long, aes(x=TIMESTAMP, y=value))+
-  ggtitle(format(ds$TIMESTAMP,"%d/%m/%Y")[1])+
+  ggtitle(format(ds3_processed$TIMESTAMP,"%d/%m/%Y")[1])+
   geom_point(pch = ".")+
   facet_wrap(~factor(envar,levels=c("AirTemp","Pa","rel_humidity","shortwave_radiation","ET0")),ncol=1,scales = "free")
 
@@ -155,7 +159,7 @@ dsChunk_raw <- subsetContiguous(ds, colTime = "TIMESTAMP", colIndex = "collar",
                             gapLength = 12, minNRec = 180, minTime = 180, indexNA = 13)
 
 # thin data (select the thinning interval, here: 8) to make calculations more efficient
-dsChunk <- dsChunk_raw %>% group_by(iChunk) %>% slice(seq(1, n(), 2)) %>% ungroup()
+dsChunk <-dsChunk_raw %>% group_by(iChunk) %>% slice(seq(1, n(), 2)) %>% ungroup()
 
 mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(collar)) %>%  head()
 
@@ -163,14 +167,14 @@ mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(coll
 ## DataFrame collar_spec then needs to specify for each collar id in column collar,
 # the colums area (m2) and volume (m3), as well a tlag (s), the lag time between start of the cycle , i.e. the start of the chunk (usually chamber closing time), and the time when the gas reaches the sensor.
 
-chamberVol_site1 = 0.475*0.475*0.794		# data jesus
-surfaceArea_site1 = 0.475*0.475
+chamberVol = 0.475*0.475*0.794		# data jesus
+surfaceArea = 0.475*0.475
 
 collar_spec <- tibble(
   collar = unique(dsChunk$collar),
   depth = 0, #pmax(0,rnorm(length(collar), mean = 0.03, sd = 0.015)),
-  area = surfaceArea_site1,
-  volume = chamberVol_site1 + surfaceArea_site1 * depth,
+  area = surfaceArea,
+  volume = chamberVol + surfaceArea * depth,
   tlag = NA)
 head(collar_spec)
 
@@ -275,101 +279,13 @@ plotResp(df, resN2OFit,colConc = "N2O_dry",ylab="N2O_dry (ppm)",xlab="time (Minu
 # -- Function calcClosedChamberFluxForChunks helps you with subsetting the data
 # -- and applying function calcClosedChamberFlux to each subset.
 
-collar_spec_CO2 <-mutate(collar_spec, tlag = 60) #One can save processing time and avoid failures in the non-robust breakpoint-detection by specifying a fixed lag-time (may differ across collars) with the collar specification.
-collar_spec_H2O <-mutate(collar_spec, tlag = 80)
-collar_spec_CH4 <-mutate(collar_spec, tlag = 60)
-collar_spec_NH3 <-mutate(collar_spec, tlag = 60)
-collar_spec_N2O <-mutate(collar_spec, tlag = 95)
+collar_spec_CO2 <-mutate(collar_spec, tlag = 90) #One can save processing time and avoid failures in the non-robust breakpoint-detection by specifying a fixed lag-time (may differ across collars) with the collar specification.
+collar_spec_H2O <-mutate(collar_spec, tlag = 90)
+collar_spec_CH4 <-mutate(collar_spec, tlag = 90)
+collar_spec_NH3 <-mutate(collar_spec, tlag = 90)
+collar_spec_N2O <-mutate(collar_spec, tlag = 90)
 
 
-
-
-
-# nNode = 8	# number of processors
-# cl = makeCluster(nNode)
-# registerDoSNOW(cl)
-# clusterEvalQ(cl, library(RespChamberProc))
-#
-#
-# system.time(res <- ddply(dsChunk, .(iChunk), function(dsi){
-#   collar <- dsi$collar[1]
-#   iChunk = dsi$iChunk[1]
-#   print( paste(iChunk, dsi$TIMESTAMP[1], " collar: ",collar) )
-#
-#
-#
-# res <- calcClosedChamberFluxForChunkSpecs(
-#       dsi, collar_spec_CO2
-#       , colTemp = "AirTemp", colPressure = "Pa"
-#       , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-#       , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-#       , colConc = "CO2_dry", colTime = "TIMESTAMP"
-#       , concSensitivity = 0.01
-#       , minTLag= 30
-#       , maxLag = 200
-#       )
-#
-#   resH2O <- calcClosedChamberFluxForChunkSpecs(
-#     dsi, collar_spec_H2O
-#     , colTemp = "AirTemp", colPressure = "Pa"
-#     , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-#     , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-#     , colConc = "H2Oppt", colTime = "TIMESTAMP"
-#     , concSensitivity = 0.01
-#     , minTLag= 120
-#     , maxLag = 200
-#   )
-# #
-#   resCH4 <-
-#     calcClosedChamberFluxForChunkSpecs(
-#       dsi, collar_spec_CH4
-#       , colTemp = "AirTemp", colPressure = "Pa"
-#       , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-#       , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-#       , colConc = "CH4_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
-#       , concSensitivity = 0.01
-#       , minTLag= 60
-#       , maxLag = 200
-#     )
-# #
-#   resNH3 <- calcClosedChamberFluxForChunkSpecs(
-#     dsi, collar_spec_NH3
-#     , colTemp = "AirTemp", colPressure = "Pa"
-#     , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-#     , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-#     , colConc = "NH3_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
-#     , concSensitivity = 0.01
-#     , minTLag= 60
-#     , maxLag = 200
-#   )
-# #
-#   resN2O <- calcClosedChamberFluxForChunkSpecs(
-#     dsi, collar_spec_N2O
-#     , colTemp = "AirTemp", colPressure = "Pa"
-#     , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare)
-#     , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
-#     , colConc = "N2O_dry", colTime = "TIMESTAMP"	# colum names conc ~ timeInSeconds
-#     , concSensitivity = 0.01
-#     , minTLag= 100
-#     , maxLag = 200
-#   )
-# #
-# #
-#
-#   #   get additional environmental variables at the initial time
-#   to <- ifelse(res$tLag == 0, 1, res$tLag)
-#   dsiInitial <- dsi[to, , drop = FALSE]
-#
-#   cbind( data.frame( time=dsiInitial[,"TIMESTAMP"], collar=collar
-#                      , CO2_flux=res$fluxMedian, CO2_flux_sd=res$sdFlux, Fregress_CO2=res$iFRegress, r2_CO2=res$r2
-#                      , H2O_flux=resH2O$fluxMedian , H2O_flux_sd=resH2O$sdFlux, Fregress_H2O=resH2O$iFRegress, r2_H2O=resH2O$r2
-#                      , CH4_flux=resCH4$fluxMedian, CH4_flux_sd=resCH4$sdFlux, Fregress_CH4=resCH4$iFRegress, r2_CH4=resCH4$r2
-#                      , NH3_flux=resNH3$fluxMedian, NH3_flux_sd=resNH3$sdFlux, Fregress_NH3=resNH3$iFRegress, r2_NH3=resNH3$r2
-#                      , N2O_flux=resN2O$fluxMedian , N2O_flux_sd=resN2O$sdFlux, Fregress_N2O=resN2O$iFRegress, r2_N2O=resN2O$r2
-#   )
-#   , dsiInitial[,c("CO2_dry","CH4_dry","NH3_dry","N2O_dry", "AirTemp","Pa")] )
-# }
-# ))
 
 res_CO2 <- calcClosedChamberFluxForChunkSpecs(
   dsChunk, collar_spec_CO2
@@ -532,12 +448,35 @@ res_NH3 <- res_NH3 %>% mutate(gas = "NH3")
 
 # Combine the data frames
 combined_res <- bind_rows(res_CO2, res_CH4, res_H2O,res_N2O,res_NH3)
-combined_res <- combined_res %>% mutate(iFRegress = factor(iFRegress))
+combined_res <- combined_res %>% mutate(iFRegress = factor(iFRegress),CV=abs(sdFlux/fluxMedian))
+
+
+#select only good values
+combined_res <- combined_res %>% filter(r2>=0.8)
+
+CV_comparison_gas <- combined_res %>% group_by(gas) %>% summarize(mean_CV=mean(CV))
 
 #save results as RDS
 saveRDS(combined_res %>% select(-c(times,model)),file=paste0(results_dir,"/results.rds"),compress = T)
 #save results as .csv
 write.csv(combined_res %>% select(-c(times,model)),file=paste0(results_dir,"/results.txt"))
+
+
+#Research question:if measurement for gas x is good for one chunk, does that mean that for gas y and for gas z it is also good?
+a <- combined_res %>% select(iChunk,r2,gas) %>%  group_by(gas)
+
+# Convert to wide format
+r2_data <- a %>%
+  pivot_wider(names_from = gas, values_from = r2)
+
+ggplot(r2_data)+
+  geom_point(aes(CO2,CH4),color="blue")+
+  geom_point(aes(CO2,H2O),color="red")+
+  geom_point(aes(CO2,NH3),color="green")+
+  labs(y="r2 CH4(blue)/H2O(red)/NH3(green)",x="r2 CO2")
+
+plot(r2_data$CO2,r2_data$CH4)
+
 
 # Plot the histograms of the used Models with facet wrap
 ggplot(combined_res, aes(x = iFRegress, fill = gas)) +
@@ -550,13 +489,6 @@ ggplot(combined_res, aes(x = iFRegress, fill = gas)) +
   theme(legend.position = "none")
 
 # Plot Flux vs. Window Duration (WD)
-
-
-
-
-
-
-
 
 
 
@@ -659,28 +591,24 @@ plot( sdFlux ~ duration, resDur_N2O$statAll[[1]] )
 #   resWDur[[v]] <- WDur
 # }
 
-#replacement of for-loop abvove:
-unique_chunks <- unique(dsChunk$iChunk)
+#replacement of for-loop above:
+##unique_chunks <- unique(dsChunk$iChunk)
+unique_good_chunks <- unique(combined_res$iChunk)
 
-resWDur <- unique_chunks %>%
+resWDur <- unique_good_chunks %>%
   map(function(v) {
     dfi <- dsChunk %>% filter(iChunk == v)
 
     plotDurationUncertaintyRelSD(
-      dfi, plot = TRUE, colConc = "CO2_dry", colTemp = "AirTemp", volume = chamberVol,
-      fRegress = list(
-        lin = regressFluxLinear,
-        tanh = regressFluxTanh,
-        exp = regressFluxExp
-      ),
+      dfi, plot = TRUE, colConc = "H2Oppt", colTemp = "AirTemp", volume = chamberVol,
       maxSdFluxRel = 1,
       durations = seq(60, max(as.numeric(dfi$TIMESTAMP) - as.numeric(dfi$TIMESTAMP[1])), 20)
     )
   }) %>%
-  set_names(unique_chunks)
+  set_names(unique_good_chunks)
 
 #save results as RDS
-saveRDS(resWDur,file=paste0(results_dir,"/results_WDur.rds"),compress = T)
+saveRDS(resWDur,file=paste0(results_dir,"/results_WDur_H2O.rds"),compress = T)
 
 
 ## extract the chunk name and duration from the list:
@@ -745,7 +673,7 @@ ggplot(WDur_tibble, aes(x = duration)) +
   ) +
   labs(
     title = "Histogram and density plot with median and quartiles",
-    subtitle = "CO2",
+    subtitle = "",
     color = NULL,  # This removes the title from the legend
     x = "Duration"
   )+
@@ -754,3 +682,5 @@ ggplot(WDur_tibble, aes(x = duration)) +
     legend.position.inside = c(1, 1),       # Position legend in the upper right
     legend.justification = c(1, 1)   # Justify the legend to the upper right corner
   )
+
+
