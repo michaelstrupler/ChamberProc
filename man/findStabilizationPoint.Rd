@@ -2,7 +2,7 @@
 % Please edit documentation in R/findStabilizationPoint.R
 \name{findStabilizationPoint}
 \alias{findStabilizationPoint}
-\title{Find the stabilization Point of a curve}
+\title{Find the stabilization Point of a curve. First, a curve (loess) is fitted to the input data and its first derivative calculated, using finite differences. Then, the index, where the derivative is close to zero is found.}
 \usage{
 findStabilizationPoint(x, y)
 }
@@ -15,7 +15,7 @@ findStabilizationPoint(x, y)
 A tibble with the Duration and Flux or SD or CV value where the curve stabilizes
 }
 \description{
-Find the stabilization Point of a curve
+Find the stabilization Point of a curve. First, a curve (loess) is fitted to the input data and its first derivative calculated, using finite differences. Then, the index, where the derivative is close to zero is found.
 }
 \examples{
 y <- resDur$statAll[[1]]$sdFlux / resDur$statAll[[1]]$fluxMedian

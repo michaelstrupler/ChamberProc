@@ -1,4 +1,4 @@
-#' Find the stabilization Point of a curve
+#' Find the stabilization Point of a curve. First, a curve (loess) is fitted to the input data and its first derivative calculated, using finite differences. Then, the index, where the derivative is close to zero is found.
 #'
 #' @param x  A vector with durations
 #' @param y  A vector with the Fluxes, coefficients of variations or standard deviations
