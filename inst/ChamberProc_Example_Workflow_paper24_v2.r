@@ -72,8 +72,8 @@ dir.create(paste0(results_pathname,"results"))
 results_dir <- paste0(results_pathname,"results/publication24")
 dir.create(results_dir)
 
-# fit chambers in parallel inside calcClosedChamberFluxForChunkSpecs
-#plan(multisession, workers = 4)
+
+
 
 
 # Read and prepare data ---------------------------------------------------
@@ -162,6 +162,20 @@ dsChunk_raw <- subsetContiguous(ds, colTime = "TIMESTAMP", colIndex = "collar",
 dsChunk <-dsChunk_raw %>% group_by(iChunk) %>% slice(seq(1, n(), 2)) %>% ungroup()
 
 mapped_collars <- dsChunk %>% group_by(iChunk) %>% summarise(collar = first(collar)) %>%  head()
+
+#assign chunks to seasons and grazing states
+
+dsChunk <- dsChunk %>% mutate(season = case_when(
+  month(TIMESTAMP) %in% c(5,6,7,8) ~ 'summer',
+  month(TIMESTAMP) %in% c(9,10,11) ~ 'autumn',
+  TRUE ~ NA_character_  # Assign NA for other months
+), grazing_state = case_when(
+  day(TIMESTAMP) %in% c(24,29) ~'not grazed',
+  day(TIMESTAMP) %in% c(01,30) ~'grazed',
+  TRUE ~ NA_character_  # Assign NA for other months
+))
+
+
 
 
 ## DataFrame collar_spec then needs to specify for each collar id in column collar,
@@ -286,6 +300,28 @@ collar_spec_NH3 <-mutate(collar_spec, tlag = 90)
 collar_spec_N2O <-mutate(collar_spec, tlag = 90)
 
 
+dsChunkSummer <- dsChunk %>% filter(season=='summer')
+dsChunkAutumn <- dsChunk %>% filter(season=='autumn')
+
+res_CO2_Summer <- calcClosedChamberFluxForChunkSpecs(
+  dsChunkSummer, collar_spec_CO2
+  , colTemp = "AirTemp", colPressure = "Pa"
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
+  , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
+  , colConc = "CO2_dry", colTime = "TIMESTAMP"
+  , concSensitivity = 0.05
+)
+
+res_CO2_Autumn <- calcClosedChamberFluxForChunkSpecs(
+  dsChunkAutumn, collar_spec_CO2
+  , colTemp = "AirTemp", colPressure = "Pa"
+  , fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp)
+  , debugInfo = list(omitEstimateLeverage = FALSE)	# faster
+  , colConc = "CO2_dry", colTime = "TIMESTAMP"
+  , concSensitivity = 0.05
+)
+
+
 
 res_CO2 <- calcClosedChamberFluxForChunkSpecs(
   dsChunk, collar_spec_CO2
@@ -295,6 +331,7 @@ res_CO2 <- calcClosedChamberFluxForChunkSpecs(
   , colConc = "CO2_dry", colTime = "TIMESTAMP"
   , concSensitivity = 0.05
 )
+
 
 res_NH3 <- calcClosedChamberFluxForChunkSpecs(
   dsChunk, collar_spec_NH3
@@ -340,6 +377,9 @@ res_H2O_r2smaller0_8 <- res_H2O %>% filter(r2>=0.8)
 res_CH4_r2smaller0_8 <- res_CH4 %>% filter(r2>=0.8)
 res_N2O_r2smaller0_8 <- res_N2O %>% filter(r2>=0.8)
 
+
+
+
 #for each Gas, identify which chunks are bad and exclude them
 dsChunk[dsChunk$iChunk %in% res_CO2_r2smaller0_8$iChunk,]
 dsChunk[dsChunk$iChunk %in% res_NH3_r2smaller0_8$iChunk,]
@@ -353,8 +393,15 @@ dsChunk[dsChunk$iChunk %in% res_N2O_r2smaller0_8$iChunk,]
 # res_facets_CO2 <- plotCampaignConcSeries(ds=dsChunk,varName = "CO2_dry",dsFits = res_CO2, plotsPerPage = 64L,fileName =paste0(results_dir,"/CO2_fit_facets.pdf")) #fileName =paste0(results_dir,"/CO2_fit_facets.pdf") )
 # print( res_facets_CO2$plot[[1]])
 
+res_facets_CO2_summer <- plotCampaignConcSeries(ds=dsChunkSummer,varName = "CO2_dry",dsFits = res_CO2_Summer, plotsPerPage = 64L,fileName =paste0(results_dir,"/CO2_fit_facets.pdf")) #fileName =paste0(results_dir,"/CO2_fit_facets.pdf") )
+print( res_facets_CO2_summer$plot[[1]])
+
+res_facets_CO2_autumn <- plotCampaignConcSeries(ds=dsChunkAutumn,varName = "CO2_dry",dsFits = res_CO2_Autumn, plotsPerPage = 64L,fileName =paste0(results_dir,"/CO2_fit_facets.pdf")) #fileName =paste0(results_dir,"/CO2_fit_facets.pdf") )
+print( res_facets_CO2_autumn$plot[[1]])
+
 res_facets_CO2_r2_0_8 <- plotCampaignConcSeries(ds=dsChunk[dsChunk$iChunk %in% res_CO2_r2smaller0_8$iChunk,],varName = "CO2_dry",dsFits = res_CO2_r2smaller0_8, plotsPerPage = 64L,fileName =paste0(results_dir,"/CO2_fit_facets.pdf")) #fileName =paste0(results_dir,"/CO2_fit_facets.pdf") )
 print( res_facets_CO2_r2_0_8$plot[[1]])
+
 
 
 # res_facets_NH3 <- plotCampaignConcSeries(ds=dsChunk,varName = "NH3_dry",dsFits = res_NH3, plotsPerPage = 64L,fileName =paste0(results_dir,"/NH3_fit_facets.pdf")) #fileName =paste0(results_dir,"/CO2_fit_facets.pdf") )
@@ -625,14 +672,17 @@ plot( sdFlux ~ duration, resDur_N2O$statAll[[1]] )
 
 #replacement of for-loop above:
 ##unique_chunks <- unique(dsChunk$iChunk)
-unique_good_chunks <- unique(combined_res$iChunk)
+
+plan(multisession, workers = 6)
+
+unique_good_chunks <- unique(res_NH3_r2smaller0_8$iChunk)
 
 resWDur <- unique_good_chunks %>%
   map(function(v) {
-    dfi <- dsChunk %>% filter(iChunk == v)
+    dfi <- dsChunk[dsChunk$iChunk %in% res_NH3_r2smaller0_8$iChunk,] %>% filter(iChunk == v)
 
     plotDurationUncertaintyRelSD(
-      dfi, plot = TRUE, colConc = "CO2_dry", colTemp = "AirTemp", volume = chamberVol,
+      dfi, plot = TRUE, colConc = "NH3_dry", colTemp = "AirTemp", volume = chamberVol,
       maxSdFluxRel = 1,
       durations = seq(60, max(as.numeric(dfi$TIMESTAMP) - as.numeric(dfi$TIMESTAMP[1])), 20)
     )
@@ -640,7 +690,7 @@ resWDur <- unique_good_chunks %>%
   set_names(unique_good_chunks)
 
 #save results as RDS
-saveRDS(resWDur,file=paste0(results_dir,"/results_WDur_CO2.rds"),compress = T)
+saveRDS(resWDur,file=paste0(results_dir,"/results_WDur_NH3.rds"),compress = T)
 
 
 ## extract the chunk name and duration from the list:

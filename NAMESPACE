@@ -3,5 +3,6 @@
 export(chunk_labels)
 export(chunk_plot)
 export(convertToRegularTimesteps)
+export(findStabilizationPoint)
 export(getAdditionalWeatherVariables)
 export(plotDurationUncertaintyRelSD)
