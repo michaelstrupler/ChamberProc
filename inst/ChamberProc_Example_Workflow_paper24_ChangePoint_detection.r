@@ -434,87 +434,6 @@ print( res_facets_H2O_r2_0_8$plot[[1]])
 
 
 
-
-
-#Tests variation in lag time and duration for a single chunk
-## Function to test optimal time windows and tlags
-# source("/Users/ms/Research Projects/Espana/UCO_Chamber/1_Test_newPackage_ChamberProc/fluxDurationTests.R")
-#
-#
-# # Define parameters for the function
-# start_tlag <- 60
-# end_tlag <- 200
-# interval_tlag <- 20
-# start_duration <- 60
-# end_duration <- 160
-# interval_duration <- 20
-# colConc <- "CO2_dry" #CH4
-#
-# #for all chunks
-# ### create a list with tLags and WD_optimums for each chunk
-# WD_O_list <-list()
-#
-# for (i in mapped_collars$iChunk) {
-#
-#   df<-filter(dsChunk,iChunk==5) #i
-# resTwindowLag<- fluxDurationTest(df, start_tlag, end_tlag, interval_tlag, start_duration, end_duration, interval_duration, colConc)
-#
-# # Access the returned objects
-# fluxTibble <- resTwindowLag$fluxTibble %>% mutate(CV=sdFlux/flux)
-# fluxTibble_pivot <- resTwindowLag$fluxTibble_pivot
-# summary_stats <- resTwindowLag$summary_stats
-#
-# fluxTibble_pivot
-# summary_stats
-#
-# # Figure sdFlux vs Window Duration (WD)
-# ggplot(data=fluxTibble, aes(x = duration, y = sdFlux, size = tLag)) +
-#   geom_point(shape=1) +
-#   labs(title = "Scatterplot of Duration vs sd Flux",
-#        x = "Duration",
-#        y = "sd Flux",
-#        size = "Tlag") +
-#   theme_minimal()
-#
-# # Figure sdFlux/flux = CV vs Window Duration (WD)
-# ggplot(data=fluxTibble, aes(x = duration, y = CV, size = tLag)) +
-#   geom_point(shape=1) +
-#   labs(title = "Scatterplot of Duration vs sdFlux/flux (CV)",
-#        x = "Duration",
-#        y = "CV",
-#        size = "Tlag") +
-#   theme_minimal()
-#
-# ## Figure with facet plots for each gas
-# ggplot(data=fluxTibble, aes(x = duration, y = sdFlux)) +
-#   geom_point() +
-#   facet_wrap(~ tLag, scales = "fixed") +
-#   labs(x = "WD", y = "sdFlux", title = "sd Flux vs WD for different tLags ")
-#
-#
-# ggplot(data=fluxTibble, aes(x = duration, y = CV)) +
-#   geom_point() +
-#   facet_wrap(~ tLag, scales = "fixed") +
-#   labs(x = "WD", y = "CV flux", title = "sd Flux / flux (=CV) vs WD for different tLags ")
-
-# create a Figure with a distribution (or histogram) of optimal Window Durations for all measurements of a gas to identify range of optimal duration
-## first define condition sd < X  or CV < X in order to define WDoptimum
-### find for each tlag the WD that first meets the criterium CV <0.5
-# WD_O <- fluxTibble  %>% group_by(tLag) %>% filter(abs(CV)<=0.5) %>% summarize(WD_optimum = min(duration, na.rm = TRUE))
-#
-# WD_O_list[[i]] <- WD_O
-# }
-
-
-
-
-
-
-
-
-
-
-
 # find optimal model fit for each gas -------------------------------------
 
 res_CO2 <- res_CO2 %>% mutate(gas = "CO2")
@@ -574,7 +493,7 @@ ggplot(combined_res, aes(x = iFRegress, fill = gas)) +
 # #Duration Uncertainty for selected chunk ----------------------------------------------------
 
 ##select just one chunk
-selected_chunk=4 #error when selected chunk==7: error in `gls()`:! false convergence (8) if exponential model or polynomial is used
+selected_chunk=2 #error when selected chunk==7: error in `gls()`:! false convergence (8) if exponential model or polynomial is used
 df<-filter(dsChunk,iChunk==selected_chunk)
 #
 resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
@@ -588,50 +507,10 @@ plot( flux ~ duration, resDur$statAll[[1]] )
 #plot( abs(sdFlux/fluxMedian) ~ duration, resDur$statAll[[1]])
 plot( sdFlux ~ duration, resDur$statAll[[1]] )
 
-#Function to find the duration when the curve (Variation Coefficient (CV) vs. duration) stabilizes
-y <- resDur$statAll[[1]]$sdFlux/resDur$statAll[[1]]$fluxMedian
-x <- resDur$statAll[[1]]$duration
-
-# Fit a smooth curve to the data using loess
-fit <- loess(y ~ x)
-
-# Predict y values using the fitted model
-y_fit <- predict(fit, x)
-
-# Calculate the first derivative using finite differences
-dy_dx <- diff(y_fit) / diff(x)
-
-# Identify the point where the derivative is close to zero
-stabilize_point_index <- which.min(abs(dy_dx))
-
-# Adjust index for comparison since diff reduces length by 1
-stabilize_x <- x[stabilize_point_index + 1]
-stabilize_y <- y_fit[stabilize_point_index + 1]
-
-# Plot the original data and the fitted curve
-plot(x, y, main = "Curve Stabilization Point", xlab = "duration", ylab = "CV", pch = 16, col = "blue")
-lines(x, y_fit, col = "red", lwd = 2)
-
-# Mark the stabilization point
-points(stabilize_x, stabilize_y, col = "green", pch = 19, cex = 1.5)
-text(stabilize_x, stabilize_y, labels = paste("Stabilizes at x =", round(stabilize_x, 2)), pos = 4)
-
-# Optionally plot the derivative to visualize stabilization
-plot(x[-length(x)], dy_dx, type = "l", main = "First Derivative", xlab = "X", ylab = "dy/dx", col = "purple")
-abline(h = 0, col = "gray", lty = 2)
-points(stabilize_x, dy_dx[stabilize_point_index], col = "green", pch = 19)
-text(stabilize_x, dy_dx[stabilize_point_index], labels = paste("Stabilizes at x =", round(stabilize_x, 2)), pos = 4)
-
-
-
-
-
-
-
-
-
-
-
+# Find optimal window duration (findStabilizationPoint Function)
+resDur_CV <- resDur$statAll[[1]]$sdFlux / resDur$statAll[[1]]$fluxMedian
+resDur_duration <- resDur$statAll[[1]]$duration
+findStabilizationPoint(resDur_duration, resDur_CV)
 
 
 resDur_H2O <- plotDurationUncertaintyRelSD( df, colConc = "H2Oppt", colTemp="AirTemp", volume = chamberVol,
@@ -641,8 +520,13 @@ resDur_H2O <- plotDurationUncertaintyRelSD( df, colConc = "H2Oppt", colTemp="Air
                                        , durations = seq(60,max(as.numeric(df$TIMESTAMP) - as.numeric(df$TIMESTAMP[1])),30)
 )
 plot( flux ~ duration, resDur_H2O$statAll[[1]] )
-plot( abs(sdFlux/fluxMedian) ~ duration, resDur_H2O$statAll[[1]])
 plot( sdFlux ~ duration, resDur_H2O$statAll[[1]] )
+
+# Find optimal window duration (findStabilizationPoint Function)
+resDur_H2O_CV <- resDur_H2O$statAll[[1]]$sdFlux / resDur_H2O$statAll[[1]]$fluxMedian
+resDur_H2O_duration <- resDur_H2O$statAll[[1]]$duration
+findStabilizationPoint(resDur_H2O_duration, resDur_H2O_CV)
+
 #
 resDur_CH4 <- plotDurationUncertaintyRelSD( df, colConc = "CH4_dry", colTemp="AirTemp", volume = chamberVol,
                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
@@ -652,8 +536,14 @@ resDur_CH4 <- plotDurationUncertaintyRelSD( df, colConc = "CH4_dry", colTemp="Ai
 )
 
 plot( flux ~ duration, resDur_CH4$statAll[[1]] )
-plot( abs(sdFlux/fluxMedian) ~ duration, resDur_CH4$statAll[[1]])
 plot( sdFlux ~ duration, resDur_CH4$statAll[[1]] )
+
+# Find optimal window duration (findStabilizationPoint Function)
+resDur_CH4_CV <- resDur_CH4$statAll[[1]]$sdFlux / resDur_CH4$statAll[[1]]$fluxMedian
+resDur_CH4_duration <- resDur_CH4$statAll[[1]]$duration
+findStabilizationPoint(resDur_CH4_duration, resDur_CH4_CV)
+
+
 #
 resDur_NH3 <- plotDurationUncertaintyRelSD( df, colConc = "NH3_dry", colTemp="AirTemp", volume = chamberVol,
                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
@@ -663,8 +553,13 @@ resDur_NH3 <- plotDurationUncertaintyRelSD( df, colConc = "NH3_dry", colTemp="Ai
 )
 
 plot( flux ~ duration, resDur_NH3$statAll[[1]] )
-plot( abs(sdFlux/fluxMedian) ~ duration, resDur_NH3$statAll[[1]])
 plot( sdFlux ~ duration, resDur_NH3$statAll[[1]] )
+
+# Find optimal window duration (findStabilizationPoint Function)
+resDur_NH3_CV <- resDur_NH3$statAll[[1]]$sdFlux / resDur_NH3$statAll[[1]]$fluxMedian
+resDur_NH3_duration <- resDur_NH3$statAll[[1]]$duration
+findStabilizationPoint(resDur_NH3_duration, resDur_NH3_CV)
+
 #
 resDur_N2O <- plotDurationUncertaintyRelSD( df, colConc = "N2O_dry", colTemp="AirTemp", volume = chamberVol,
                                        fRegress = c(lin = regressFluxLinear, tanh = regressFluxTanh, exp = regressFluxExp, poly= regressFluxSquare
@@ -674,8 +569,13 @@ resDur_N2O <- plotDurationUncertaintyRelSD( df, colConc = "N2O_dry", colTemp="Ai
 )
 
 plot( flux ~ duration, resDur_N2O$statAll[[1]] )
-plot( abs(sdFlux/fluxMedian) ~ duration, resDur_N2O$statAll[[1]])
 plot( sdFlux ~ duration, resDur_N2O$statAll[[1]] )
+
+# Find optimal window duration (findStabilizationPoint Function)
+resDur_N2O_CV <- resDur_N2O$statAll[[1]]$sdFlux / resDur_N2O$statAll[[1]]$fluxMedian
+resDur_N2O_duration <- resDur_N2O$statAll[[1]]$duration
+findStabilizationPoint(resDur_N2O_duration, resDur_N2O_CV)
+
 
 #
 #
@@ -720,34 +620,38 @@ plot( sdFlux ~ duration, resDur_N2O$statAll[[1]] )
 
 plan(multisession, workers = 6)
 
-unique_good_chunks <- unique(res_NH3_r2smaller0_8$iChunk)
+unique_good_chunks <- unique(res_CO2_r2smaller0_8$iChunk)
 
 resWDur <- unique_good_chunks %>%
   map(function(v) {
-    dfi <- dsChunk[dsChunk$iChunk %in% res_NH3_r2smaller0_8$iChunk,] %>% filter(iChunk == v)
+    dfi <- dsChunk[dsChunk$iChunk %in% res_CO2_r2smaller0_8$iChunk,] %>% filter(iChunk == v)
 
-    plotDurationUncertaintyRelSD(
-      dfi, plot = TRUE, colConc = "NH3_dry", colTemp = "AirTemp", volume = chamberVol,
-      maxSdFluxRel = 1,
-      durations = seq(60, max(as.numeric(dfi$TIMESTAMP) - as.numeric(dfi$TIMESTAMP[1])), 20)
+    plotDurationUncertainty(
+      dfi, colConc = "CO2_dry", colTemp = "AirTemp", volume = chamberVol,
+      durations = seq(60, max(as.numeric(dfi$TIMESTAMP) - as.numeric(dfi$TIMESTAMP[1])), 30)
     )
   }) %>%
   set_names(unique_good_chunks)
 
 #save results as RDS
-saveRDS(resWDur,file=paste0(results_dir,"/results_WDur_NH3.rds"),compress = T)
+#saveRDS(resWDur,file=paste0(results_dir,"/results_WDur_NH3.rds"),compress = T)
 
+#zz <- readRDS(paste0(results_dir,"/results_WDur_NH3.rds"))
 
-## extract the chunk name and duration from the list:
-# function to extract duration and list name
-extract_duration <- function(tbl_name, tbl) {
-  duration <- tbl$duration
-  list_name <- as.integer(tbl_name)
-  tibble(list_name = list_name, duration = duration)
-}
+# Apply the function findStabilizationPoints to each data frame in the list
+WDur_opt <- lapply(resWDur, function(df) {
+  y <- df$statAll[[1]]$sdFlux / df$statAll[[1]]$fluxMedian
+  x <- df$statAll[[1]]$duration
+  findStabilizationPoint(x, y)
+})
 
-# Iterate over each tibble in `resWDur`, extracting duration and list name
-WDur_tibble <- map_df(names(resWDur), ~ extract_duration(.x, resWDur[[.x]]))
+# Create a tibble with the chunk names and the respective optimal window durations
+# Create a tibble with the names of each list item
+WDur_opt_tibble <- tibble(
+  name = names(WDur_opt),
+  Duration_stab = sapply(WDur_opt, function(res) res$Duration_stab),
+  CV_stab = sapply(WDur_opt, function(res) res$CV_stab)
+)
 
 # ggplot() +
 #   geom_histogram(aes(WDur_tibble$duration), binwidth = 20, color = "black", fill= "grey") +
@@ -761,18 +665,18 @@ WDur_tibble <- map_df(names(resWDur), ~ extract_duration(.x, resWDur[[.x]]))
 
 # Plot With coloured quantiles
 # Compute median and quartiles
-median_val <- median(WDur_tibble$duration)
-quantile_25 <- quantile(WDur_tibble$duration, 0.25)
-quantile_75 <- quantile(WDur_tibble$duration, 0.75)
+median_val <- median(WDur_opt_tibble$Duration_stab)
+quantile_25 <- quantile(WDur_opt_tibble$Duration_stab, 0.25)
+quantile_75 <- quantile(WDur_opt_tibble$Duration_stab, 0.75)
 
 # Total number of observations
-total_counts <- nrow(WDur_tibble)
+total_counts <- nrow(WDur_opt_tibble$Duration_stab)
 
 # Bin width
 binwidth <- 2
 
 # Maximum count for the histogram
-max_count <- max(hist(WDur_tibble$duration, plot = FALSE, breaks = seq(min(WDur_tibble$duration), max(WDur_tibble$duration), by = binwidth))$counts)
+max_count <- max(hist(WDur_opt_tibble$Duration_stab, plot = FALSE, breaks = seq(min(WDur_opt_tibble$Duration_stab), max(WDur_opt_tibble$Duration_stab), by = binwidth))$counts)
 
 # Create a dataframe for quantiles (used for legend)
 vline_data <- data.frame(
@@ -782,14 +686,14 @@ vline_data <- data.frame(
 )
 
 # Create the plot
-ggplot(WDur_tibble, aes(x = duration)) +
+ggplot(WDur_opt_tibble, aes(x = Duration_stab)) +
   theme_minimal() +
   geom_histogram(aes(y = after_stat(density)), fill = "grey", color = NA, binwidth = binwidth) +
   geom_density(fill = "lightblue", alpha = 0.5) +
   geom_vline(data = vline_data, aes(xintercept = x, color = label), linetype = "dashed", linewidth = 1) +
   scale_color_manual(values = c("Median" = "red", "1st Quartile" = "blue", "3rd Quartile" = "blue")) +
   scale_x_continuous(
-    breaks = seq(min(WDur_tibble$duration), max(WDur_tibble$duration), by = 20),
+    breaks = seq(min(WDur_opt_tibble$Duration_stab), max(WDur_opt_tibble$Duration_stab), by = 20),
     name = "Duration"
   ) +
   scale_y_continuous(
