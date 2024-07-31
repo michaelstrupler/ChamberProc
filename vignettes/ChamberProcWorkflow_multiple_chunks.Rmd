@@ -214,10 +214,10 @@ p_CO2
 ```{r}
 #One can save processing time and avoid failures in the non-robust breakpoint-detection by specifying a fixed lag-time (may differ across collars) with the collar specification.
 collar_spec_CO2 <-mutate(collar_spec, tlag = 60,depth = 0.1, volume =  chamberVol + surfaceArea * depth )  # volume has to be re-calculated here otherwise only depth column will change if we mutate depth
-collar_spec_H2O <-mutate(collar_spec, tlag = 120)
+collar_spec_H2O <-mutate(collar_spec, tlag = 90)
 collar_spec_CH4 <-mutate(collar_spec, tlag = 60)
 collar_spec_NH3 <-mutate(collar_spec, tlag = 60)
-collar_spec_N2O <-mutate(collar_spec, tlag = 120)
+collar_spec_N2O <-mutate(collar_spec, tlag = 60)
 
 # parallel computing
 plan(multisession, workers = 4) 

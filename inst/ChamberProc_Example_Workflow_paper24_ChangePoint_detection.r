@@ -492,8 +492,46 @@ ggplot(combined_res, aes(x = iFRegress, fill = gas)) +
 
 # #Duration Uncertainty for selected chunk ----------------------------------------------------
 
+findStabilizationPoint <- function(x, y) {
+  # Fit a smooth curve to the data using loess
+  fit <- loess(y ~ x)
+
+  # Predict y values using the fitted model
+  y_fit <- predict(fit, x)
+
+  # Calculate the first derivative using finite differences
+  dy_dx <- diff(y_fit) / diff(x)
+
+  # Calculate the 25th quantile of the absolute derivative values
+  quantile_25 <- quantile(abs(dy_dx), 0.25)
+
+  # Find the index where the derivative is closest to the 25th quantile
+  stabilize_point_index <- which.min(abs(abs(dy_dx) - quantile_25))
+
+  # Adjust index for comparison since diff reduces length by 1
+  stabilize_x <- x[stabilize_point_index + 1]
+  stabilize_y <- y_fit[stabilize_point_index + 1]
+
+  # Plot the original data and the fitted curve
+  plot(x, y, main = "Curve Stabilization Point", xlab = "Duration", ylab = "Flux or Sd or CV", pch = 16, col = "blue")
+  lines(x, y_fit, col = "red", lwd = 2)
+
+  # Mark the stabilization point
+  points(stabilize_x, stabilize_y, col = "green", pch = 19, cex = 1.5)
+  text(stabilize_x, stabilize_y, labels = paste("Stabilizes at x =", round(stabilize_x, 2)), pos = 4)
+
+  # Optionally plot the derivative to visualize stabilization
+  plot(x[-length(x)], dy_dx, type = "l", main = "First Derivative", xlab = "X", ylab = "dy/dx", col = "purple")
+  abline(h = 0, col = "gray", lty = 2)
+  points(stabilize_x, dy_dx[stabilize_point_index], col = "green", pch = 19)
+  text(stabilize_x, dy_dx[stabilize_point_index], labels = paste("Stabilizes at x =", round(stabilize_x, 2)), pos = 4)
+
+  return(tibble(Duration_stab = stabilize_x, CV_stab = stabilize_y))
+}
+
+
 ##select just one chunk
-selected_chunk=2 #error when selected chunk==7: error in `gls()`:! false convergence (8) if exponential model or polynomial is used
+selected_chunk=4 #error when selected chunk==7: error in `gls()`:! false convergence (8) if exponential model or polynomial is used
 df<-filter(dsChunk,iChunk==selected_chunk)
 #
 resDur <- plotDurationUncertaintyRelSD( df, colConc = "CO2_dry", colTemp="AirTemp", volume = chamberVol,
@@ -510,7 +548,7 @@ plot( sdFlux ~ duration, resDur$statAll[[1]] )
 # Find optimal window duration (findStabilizationPoint Function)
 resDur_CV <- resDur$statAll[[1]]$sdFlux / resDur$statAll[[1]]$fluxMedian
 resDur_duration <- resDur$statAll[[1]]$duration
-findStabilizationPoint(resDur_duration, resDur_CV)
+findStabilizationPoint(resDur_duration,  resDur$statAll[[1]]$flux )
 
 
 resDur_H2O <- plotDurationUncertaintyRelSD( df, colConc = "H2Oppt", colTemp="AirTemp", volume = chamberVol,
@@ -525,7 +563,7 @@ plot( sdFlux ~ duration, resDur_H2O$statAll[[1]] )
 # Find optimal window duration (findStabilizationPoint Function)
 resDur_H2O_CV <- resDur_H2O$statAll[[1]]$sdFlux / resDur_H2O$statAll[[1]]$fluxMedian
 resDur_H2O_duration <- resDur_H2O$statAll[[1]]$duration
-findStabilizationPoint(resDur_H2O_duration, resDur_H2O_CV)
+findStabilizationPoint(resDur_H2O_duration, resDur_H2O$statAll[[1]]$flux)
 
 #
 resDur_CH4 <- plotDurationUncertaintyRelSD( df, colConc = "CH4_dry", colTemp="AirTemp", volume = chamberVol,
@@ -541,7 +579,7 @@ plot( sdFlux ~ duration, resDur_CH4$statAll[[1]] )
 # Find optimal window duration (findStabilizationPoint Function)
 resDur_CH4_CV <- resDur_CH4$statAll[[1]]$sdFlux / resDur_CH4$statAll[[1]]$fluxMedian
 resDur_CH4_duration <- resDur_CH4$statAll[[1]]$duration
-findStabilizationPoint(resDur_CH4_duration, resDur_CH4_CV)
+findStabilizationPoint(resDur_CH4_duration, resDur_CH4$statAll[[1]]$flux)
 
 
 #
@@ -558,7 +596,7 @@ plot( sdFlux ~ duration, resDur_NH3$statAll[[1]] )
 # Find optimal window duration (findStabilizationPoint Function)
 resDur_NH3_CV <- resDur_NH3$statAll[[1]]$sdFlux / resDur_NH3$statAll[[1]]$fluxMedian
 resDur_NH3_duration <- resDur_NH3$statAll[[1]]$duration
-findStabilizationPoint(resDur_NH3_duration, resDur_NH3_CV)
+findStabilizationPoint(resDur_NH3_duration, resDur_NH3$statAll[[1]]$flux)
 
 #
 resDur_N2O <- plotDurationUncertaintyRelSD( df, colConc = "N2O_dry", colTemp="AirTemp", volume = chamberVol,
@@ -574,7 +612,7 @@ plot( sdFlux ~ duration, resDur_N2O$statAll[[1]] )
 # Find optimal window duration (findStabilizationPoint Function)
 resDur_N2O_CV <- resDur_N2O$statAll[[1]]$sdFlux / resDur_N2O$statAll[[1]]$fluxMedian
 resDur_N2O_duration <- resDur_N2O$statAll[[1]]$duration
-findStabilizationPoint(resDur_N2O_duration, resDur_N2O_CV)
+findStabilizationPoint(resDur_N2O_duration, resDur_N2O$statAll[[1]]$flux)
 
 
 #

@@ -2,20 +2,22 @@
 % Please edit documentation in R/findStabilizationPoint.R
 \name{findStabilizationPoint}
 \alias{findStabilizationPoint}
-\title{Find the stabilization Point of a curve. First, a curve (loess) is fitted to the input data and its first derivative calculated, using finite differences. Then, the index, where the derivative is close to zero is found.}
+\title{Find the stabilization Point of a curve. First, a curve (loess) is fitted to the input data and its first derivative calculated, using finite differences. Then, the index, where a selected quantile of the derivative is close to zero is found.}
 \usage{
-findStabilizationPoint(x, y)
+findStabilizationPoint(x, y, qt)
 }
 \arguments{
 \item{x}{A vector with durations}
 
 \item{y}{A vector with the Fluxes, coefficients of variations or standard deviations}
+
+\item{qt}{A quantile (value between 0 and 1)}
 }
 \value{
 A tibble with the Duration and Flux or SD or CV value where the curve stabilizes
 }
 \description{
-Find the stabilization Point of a curve. First, a curve (loess) is fitted to the input data and its first derivative calculated, using finite differences. Then, the index, where the derivative is close to zero is found.
+Find the stabilization Point of a curve. First, a curve (loess) is fitted to the input data and its first derivative calculated, using finite differences. Then, the index, where a selected quantile of the derivative is close to zero is found.
 }
 \examples{
 y <- resDur$statAll[[1]]$sdFlux / resDur$statAll[[1]]$fluxMedian

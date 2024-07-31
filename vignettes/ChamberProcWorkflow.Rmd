@@ -309,4 +309,7 @@ The fitted form (solid line) approximates the change of measured concentration (
 
 
 # Duration uncertainty
+To investigate the optimum Measurement Duration Window the function "plotDurationUncertainty" in combination with the function "findStabilizationPoint" is used. The first function calculates the mean and standard deviation of the flux for each measurement duration and plots them against a vector of measurement durations.
+
+The second function fits a curve to these data points (loess) and calculates its first derivative. The location, where the derivative is close to zero defines the point where the curve stabilizes, thus, where the optimum Window Duration is located.
 
